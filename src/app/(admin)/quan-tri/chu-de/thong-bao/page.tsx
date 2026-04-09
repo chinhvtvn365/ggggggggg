@@ -1,0 +1,374 @@
+"use client";
+
+import React, { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
+import { Chip } from "@heroui/react";
+import DataTable from "@/components/layouts/admin/commons/table/DataTable";
+import { DELETE_TYPE_MULTI } from "@/constants/datatable.enum";
+import { proxyService } from "@/services";
+import { useAppDispatch } from "@/lib/hooks";
+import { showSuccess, showError } from "@/lib/features/snackbar/snackBarSlice";
+import moment from "moment";
+import { useSearchParams } from "next/navigation";
+
+// Types
+interface LookupOption {
+  label: string;
+  value: string;
+  shortlabel?: string;
+}
+
+interface ChuDeTinTuc {
+  id: string;
+  ten: string;
+  duongDan?: string;
+  isActive: boolean;
+  parentId?: string;
+  parent?: unknown;
+  level?: number;
+  newsCount?: number;
+  hinhAnh?: { dataUrl?: string };
+  crawlEnabled?: boolean;
+  crawlLastStatus?: number;
+  crawlLastTime?: string;
+  lastModificationTime?: string;
+  creationTime?: string;
+  lastModifiedName?: string;
+  creatorName?: string;
+}
+
+// ── Lazy load AddEditNewsTopic (nếu component tồn tại, nếu chưa có thì tạo placeholder)
+const AddEditNewsTopic = React.lazy(() =>
+  import("@/components/system/menu/AddEdit").catch(() => ({
+    default: () => <div className="p-4 text-gray-500">Đang cập nhật form thêm/sửa chủ đề...</div>,
+  }))
+);
+
+const Page = () => {
+  const dispatch = useAppDispatch();
+  const searchParams = useSearchParams();
+  const loaiTinTuc = searchParams.get("LoaiTinTuc") || "";
+
+  const [forceReload, setForceReload] = useState(false);
+  const [crawlingId, setCrawlingId] = useState<string | null>(null);
+  const [dsLinhVuc, setLinhVuc] = useState<LookupOption[]>([]);
+  const [dsLoaiBanTin, setLoaiBanTin] = useState<LookupOption[]>([]);
+  const [dsChuDeTinTucCapCha, setDsChuDeTinTucCapCha] = useState<ChuDeTinTuc[]>([]);
+
+  const handleContentData = (data: ChuDeTinTuc) => data;
+
+  const createNewsTopicForm = async (data: Record<string, unknown>): Promise<FormData> => {
+    const formData = new FormData();
+    formData.append("ten", String(data?.ten || ""));
+    formData.append("duongDan", String(data?.duongDan || ""));
+    formData.append("ParentId", String(data?.parentId || ""));
+    formData.append("isActive", String(data?.isActive || false));
+    formData.append("LinhVucId", String(data?.linhVuc || ""));
+    formData.append("LoaiTinTuc", loaiTinTuc);
+    const orderVal = data?.order;
+    formData.append("order", String(typeof orderVal === "number" && Number.isInteger(orderVal) ? orderVal : 0));
+
+    // Crawl config
+    const crawlFields = [
+      "crawlEnabled", "crawlUrl", "crawlTheDanhSach", "crawlTieuDe",
+      "crawlLinkBaiViet", "crawlImage", "crawlThoiGian", "crawlDinhDangThoiGian",
+      "crawlNoiDungTomTat", "crawlNoiDung", "crawlNoiDungLoaiBo", "crawlChuKy", "crawlGhiDe",
+    ];
+    crawlFields.forEach((key) => formData.append(key, String(data?.[key] || "")));
+
+    // Upload ảnh
+    const hinhAnh = data?.hinhAnh;
+    if (hinhAnh instanceof File) {
+      try {
+        const formUpload = new FormData();
+        formUpload.append("files", hinhAnh);
+        const res = await proxyService.post<Array<{ id: string }>>(
+          "/api/app/file-upload/UploadMulti?folder=tin-tuc-chu-de",
+          formUpload
+        );
+        if (res?.status === 200 && Array.isArray(res.data) && res.data[0]?.id) {
+          formData.append("HinhAnh", res.data[0].id);
+        }
+      } catch (err) {
+        console.error("Lỗi upload hình ảnh:", err);
+      }
+    }
+    return formData;
+  };
+
+  const getDanhMuc = useCallback(async () => {
+    const danhSachMaChucNang = ["LinhVucNongNghiep", "LoaiTinTuc"];
+    const query = danhSachMaChucNang
+      .map((item) => `DanhSachMaChucNang=${encodeURIComponent(item)}`)
+      .join("&");
+    try {
+      const res = await proxyService.get<
+        Record<string, Array<{ ten: string; id?: string; ma?: string; tenVietTat?: string }>>
+      >(`/api/app/danh-muc/danh-sach-ma?${query}`);
+      if (res?.status === 200 && res?.data) {
+        setLinhVuc(
+          (res.data["LinhVucNongNghiep"] || []).map((x) => ({
+            label: x.ten,
+            value: x.id || "",
+            shortlabel: x.tenVietTat,
+          }))
+        );
+        setLoaiBanTin(
+          (res.data["LoaiTinTuc"] || []).map((x) => ({
+            label: x.ten,
+            value: x.ma || "",
+            shortlabel: x.tenVietTat,
+          }))
+        );
+      }
+    } catch (err) {
+      console.error("Lỗi fetch danh mục:", err);
+    }
+  }, []);
+
+  const getNewsTopicParent = useCallback(async () => {
+    try {
+      const response = await proxyService.get<{ items: ChuDeTinTuc[] }>(
+        `/api/app/tin-tuc-chu-de/phan-cap?IsActive=true&LoaiTinTuc=${loaiTinTuc}`
+      );
+      if (response?.status === 200 && response.data?.items) {
+        const filteredData = response.data.items.filter(
+          (item) => !item.parentId && !item.parent
+        );
+        setDsChuDeTinTucCapCha(filteredData);
+      }
+    } catch (err) {
+      console.error("Lỗi fetch chủ đề cha:", err);
+    }
+  }, [loaiTinTuc]);
+
+  const handleCrawlData = async (chuDeId: string) => {
+    setCrawlingId(chuDeId);
+    try {
+      const res = await proxyService.post<{ success: boolean; message: string }>(
+        `/api/app/tin-tuc-chu-de/crawl-and-save/${chuDeId}`,
+        {}
+      );
+      if (res?.status === 200 && res?.data) {
+        if (res.data.success) {
+          dispatch(showSuccess({ message: res.data.message, title: "Thu thập thành công", delay: 5000 }));
+        } else {
+          dispatch(showError({ message: res.data.message, title: "Thu thập thất bại", delay: 5000 }));
+        }
+        setForceReload((prev) => !prev);
+      }
+    } catch (err) {
+      dispatch(showError({ message: "Có lỗi xảy ra khi thu thập dữ liệu", title: "Lỗi", delay: 3000 }));
+      console.error("Lỗi crawl:", err);
+    } finally {
+      setCrawlingId(null);
+    }
+  };
+
+  useEffect(() => {
+    void getDanhMuc();
+    void getNewsTopicParent();
+  }, [getDanhMuc, getNewsTopicParent]);
+
+  const metadata = {
+    serverSide: {
+      api: "/api/app/tin-tuc-chu-de/phan-cap",
+      transformStrategy: (dataBinding: ChuDeTinTuc[]) => dataBinding.map(handleContentData),
+    },
+    table: {
+      permission: "NewsGroup.Default",
+      pagination: false,
+      columns: [
+        {
+          name: "Ảnh",
+          dataField: "hinhAnh",
+          width: "80px",
+          alignItems: "center",
+          alignHeader: "center",
+          dataFormat: (data: ChuDeTinTuc) => (
+            <div className="flex gap-2 justify-center items-center">
+              {data?.hinhAnh?.dataUrl ? (
+                <Image
+                  src={data.hinhAnh.dataUrl}
+                  alt="Ảnh chủ đề"
+                  width={60}
+                  height={40}
+                  className="object-cover rounded"
+                  style={{ border: "1px solid #e0e0e0" }}
+                />
+              ) : (
+                <div className="flex items-center justify-center bg-gray-100 rounded text-gray-400"
+                  style={{ height: 40, width: 60, border: "1px solid #e0e0e0" }}>
+                  <i className="pi pi-image text-base" />
+                </div>
+              )}
+            </div>
+          ),
+        },
+        {
+          name: "Tên chủ đề",
+          dataField: "ten",
+          filterBy: "ten",
+          dataFormatEdit: (data: ChuDeTinTuc) => {
+            let hierarchy = "";
+            for (let i = 0; i < (data.level || 0); i++) hierarchy += "├ ";
+            const isChild = data.parent !== null && data.parentId !== null;
+            return (
+              <div>
+                <span style={{
+                  fontWeight: isChild ? "normal" : "600",
+                  color: isChild ? "#64748b" : "#1e293b",
+                  fontSize: isChild ? "13px" : "14px",
+                }}>
+                  {hierarchy}{data.ten}
+                </span>
+                {data.duongDan && (
+                  <small className="block text-slate-400 text-[11px] mt-0.5">/{data.duongDan}</small>
+                )}
+              </div>
+            );
+          },
+        },
+        {
+          name: "Trạng thái",
+          dataField: "isActive",
+          width: "120px",
+          dataFormat: (data: ChuDeTinTuc) => (
+            <div className="flex justify-center">
+              <Chip
+                size="sm"
+                className={data.isActive
+                  ? "bg-green-600 text-white font-semibold"
+                  : "bg-slate-500 text-white font-semibold"}
+              >
+                {data.isActive ? "Kích hoạt" : "Tạm dừng"}
+              </Chip>
+            </div>
+          ),
+        },
+        {
+          name: "Cập nhật cuối",
+          dataField: "lastModificationTime",
+          width: "160px",
+          dataFormat: (data: ChuDeTinTuc) => (
+            <div>
+              <div className="font-medium text-slate-700 text-[13px]">
+                {data.lastModifiedName || data.creatorName || "Hệ thống"}
+              </div>
+              <div className="text-slate-400 text-[11px] mt-0.5">
+                {data.lastModificationTime
+                  ? moment(data.lastModificationTime).format("DD/MM/YYYY HH:mm")
+                  : data.creationTime
+                    ? moment(data.creationTime).format("DD/MM/YYYY HH:mm")
+                    : ""}
+              </div>
+            </div>
+          ),
+        },
+        {
+          name: "Số tin",
+          dataField: "newsCount",
+          width: "80px",
+          dataFormat: (data: ChuDeTinTuc) => (
+            <div className="flex justify-center">
+              <Chip
+                size="sm"
+                className={(data.newsCount ?? 0) > 0
+                  ? "bg-blue-500 text-white font-semibold"
+                  : "bg-gray-200 text-gray-500 font-semibold"}
+              >
+                {data.newsCount || 0} bài
+              </Chip>
+            </div>
+          ),
+        },
+        {
+          name: "Crawl",
+          dataField: "crawlEnabled",
+          width: "160px",
+          dataFormat: (data: ChuDeTinTuc) => {
+            if (!data.crawlEnabled) {
+              return (
+                <div className="flex justify-center">
+                  <Chip size="sm" className="bg-gray-300 text-gray-600">Chưa cấu hình</Chip>
+                </div>
+              );
+            }
+            const statusColor =
+              data.crawlLastStatus === 0 ? "bg-green-600" :
+              data.crawlLastStatus === 1 ? "bg-red-600" : "bg-blue-500";
+            const statusLabel =
+              data.crawlLastStatus === 0 ? "Hoạt động" :
+              data.crawlLastStatus === 1 ? "Lỗi" : "Chờ chạy";
+            return (
+              <div className="flex flex-col gap-1 items-center">
+                <Chip size="sm" className={`${statusColor} text-white font-semibold`}>{statusLabel}</Chip>
+                {data.crawlLastTime && (
+                  <span className="text-[10px] text-gray-400">
+                    {moment(data.crawlLastTime).format("DD/MM HH:mm")}
+                  </span>
+                )}
+               
+              </div>
+            );
+          },
+        },
+      ],
+    },
+    filterTools: {
+      inputPlaceholder: "Tìm theo chủ đề / chủ đề con",
+      components: [] as LookupOption[],
+    },
+    crudButtons: {
+      create: {
+        active: true,
+        permission: "NewsGroup.Default.Create",
+        uiConfigs: { headerText: "Thêm chủ đề tin tức" },
+        component: AddEditNewsTopic,
+        dataSource: {
+          LoaiTinTuc: dsLoaiBanTin,
+          LinhVucNongNghiep: dsLinhVuc,
+          DsChuDeTinTucCapCha: dsChuDeTinTucCapCha,
+        },
+        transform2BE: createNewsTopicForm,
+        handleResponseData: handleContentData,
+        api: "/api/app/tin-tuc-chu-de",
+        callback: () => setForceReload((prev) => !prev),
+      },
+      update: {
+        active: true,
+        permission: "NewsGroup.Default.Update",
+        uiConfigs: { headerText: "Cập nhật chủ đề tin tức" },
+        component: AddEditNewsTopic,
+        dataSource: {
+          LoaiTinTuc: dsLoaiBanTin,
+          LinhVucNongNghiep: dsLinhVuc,
+          DsChuDeTinTucCapCha: dsChuDeTinTucCapCha,
+        },
+        transform2BE: createNewsTopicForm,
+        handleResponseData: handleContentData,
+        api: "/api/app/tin-tuc-chu-de",
+        callback: () => setForceReload((prev) => !prev),
+      },
+      delete: {
+        active: true,
+        permission: "NewsGroup.Default.Delete",
+        type: DELETE_TYPE_MULTI,
+        api: "/api/app/tin-tuc-chu-de",
+        params: "ids",
+      },
+    },
+  };
+
+  return (
+    <div className="p-4 bg-background rounded-2xl shadow-sm border border-gray-100">
+      <DataTable
+        metadata={metadata}
+        forceReload={forceReload}
+        params={{ LoaiTinTuc: loaiTinTuc }}
+      />
+    </div>
+  );
+};
+
+export default Page;
