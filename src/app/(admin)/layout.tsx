@@ -78,14 +78,13 @@ export default function AdminLayout({
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 text-slate-900 gap-6">
+    <div className="flex h-screen bg-slate-50 text-slate-900">
       <AdminSidebar
         setBreadcrumbsData={setBreadcrumbsData}
         setUserInfo={setUserInfo}
       />
-      <div className="flex flex-col flex-1 overflow-hidden py-6 pr-6 bg-transparent">
-        <div className="flex flex-col flex-1 overflow-hidden rounded-[24px] border border-slate-200/50 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-          <div className="h-11 px-4 bg-transparent border-b border-slate-200/80 flex items-center justify-between">
+      <div className="flex flex-col flex-1 overflow-hidden bg-slate-50 relative">
+        <header className="flex h-14 bg-white/70 backdrop-blur-md shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] px-6 items-center justify-between sticky top-0 z-20">
             <div className="flex items-center gap-2.5 min-w-0">
             <Link
               href="/"
@@ -99,10 +98,10 @@ export default function AdminLayout({
                 <>
                   {breadcrumbsData.map((item, index) => (
                     <div key={index} className="flex items-center gap-2.5">
-                      <i className="fas fa-chevron-right text-xs text-slate-400" />
+                      <i className="fas fa-chevron-right text-[10px] text-slate-400" />
                       <Link
                         href={item.url}
-                        className="text-[13px] font-normal text-slate-500 hover:text-slate-700 transition-colors truncate font-admin-heading"
+                        className="text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors truncate font-admin-heading"
                       >
                         {item.label}
                       </Link>
@@ -179,12 +178,11 @@ export default function AdminLayout({
                 </Dropdown>
               </div>
             </div>
-          </div>
+        </header>
 
-          <main className="flex-1 overflow-y-auto p-3 bg-transparent">
-            {children}
-          </main>
-        </div>
+        <main className="flex-1 overflow-y-auto px-6 py-6 bg-slate-50">
+          {children}
+        </main>
         <AdminFooter />
       </div>
     </div>

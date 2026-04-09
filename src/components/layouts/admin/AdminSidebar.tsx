@@ -122,25 +122,20 @@ export default function AdminSidebar({ setBreadcrumbsData, setUserInfo: setParen
 
   return (
     <aside
-      className="w-72 bg-white flex flex-col overflow-hidden relative border-r border-slate-200/80 shadow-[2px_0_14px_rgba(15,23,42,0.05)] stagger-fade-in"
-      style={{ borderRightWidth: "0.5px" }}
+      className="w-72 bg-white flex flex-col overflow-hidden relative shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] z-30 stagger-fade-in"
     >
       <div className="px-6 py-6 border-b border-slate-200/50 bg-white">
         <Link href="/" className="flex items-center gap-3 relative group">
           <Image
             src="/layout/images/logo.png"
-            height={48}
-            width={48}
-            alt="Logo"
-            className="drop-shadow-[0_4px_12px_rgba(15,23,42,0.15)]"
+            height={44}
+            width={44}
+            alt="Quốc huy"
+            className="drop-shadow-[0_2px_8px_rgba(0,0,0,0.15)]"
           />
           <div className="flex flex-col min-w-0">
-            <span className="text-lg text-slate-900 font-extrabold uppercase tracking-widest font-admin-heading leading-tight">
-              Chính quyền
-            </span>
-            <hr className="my-0.5 border-slate-100" />
-            <span className="text-[11px] text-slate-500 font-medium tracking-wider">
-              Hệ thống quản trị
+            <span className="text-xl text-slate-900 font-extrabold uppercase tracking-tight font-sans leading-tight">
+              CHÍNH QUYỀN ĐIỆN TỬ
             </span>
           </div>
         </Link>

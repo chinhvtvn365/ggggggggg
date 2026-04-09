@@ -181,11 +181,11 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
         deleteBtn.type === DELETE_TYPE_MULTI &&
         (!deleteBtn.permission || deleteBtn.permission in granted) && (
           <Button
-            className={(deleteBtn.className as string) || "btn-danger"}
+            className={(deleteBtn.className as string) || "bg-rose-50 text-rose-600 font-bold rounded-lg hover:bg-rose-100 transition-all shadow-none"}
             isDisabled={!selected || selected.length <= 0}
             onPress={openDeleteModal}
           >
-            <i className="fas fa-trash-alt" />
+            <i className="fas fa-trash-alt mr-1" />
             Xóa {selected && selected.length > 0 ? `(${selected.length})` : ""}
           </Button>
         )}

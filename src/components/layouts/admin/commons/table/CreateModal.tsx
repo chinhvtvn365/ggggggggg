@@ -208,9 +208,9 @@ const CreateModal: React.FC<CreateModalProps> = (props) => {
               if (typeof onClick === "function") onClick();
             }
           }}
-          className={className || "btn-success"}
+          className={className || "bg-gradient-to-b from-emerald-400 to-emerald-600 text-white font-bold rounded-lg shadow-[0_4px_14px_0_rgba(16,185,129,0.39)] hover:-translate-y-0.5 transition-all outline-none"}
         >
-          <i className="fa-solid fa-plus" />
+          <i className="fa-solid fa-plus mr-1" />
           {customLabel ?? "Thêm"}
         </Button>
       )}

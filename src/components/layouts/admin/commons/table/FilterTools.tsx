@@ -208,8 +208,8 @@ const FilterTools: React.FC<FilterToolsProps> = ({
                   className={cn(
                     "w-full h-8 flex items-center justify-between text-sm font-medium transition-colors px-2.5 cursor-pointer select-none",
                     softMode
-                      ? "rounded-xl bg-slate-50 border border-transparent hover:border-blue-200 focus:ring-2 focus:ring-blue-500/20"
-                      : "rounded-xl bg-white border border-slate-200 hover:border-slate-300",
+                      ? "rounded-xl bg-white border border-slate-300 hover:border-blue-400 focus:ring-2 focus:ring-blue-500 shadow-sm"
+                      : "rounded-xl bg-white border border-slate-200 hover:border-slate-300 shadow-sm",
                   )}
                 >
                   <span className="text-slate-700 truncate">
@@ -335,8 +335,8 @@ const FilterTools: React.FC<FilterToolsProps> = ({
                 className={cn(
                   "w-full h-8 text-sm font-medium pl-9 pr-8 transition-colors",
                   softMode
-                    ? "rounded-xl bg-slate-50 border border-transparent hover:border-blue-200 focus:ring-2 focus:ring-blue-500/20 focus:border-transparent outline-none"
-                    : "rounded-xl bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-300 outline-none",
+                    ? "rounded-xl bg-white border border-slate-300 hover:border-blue-400 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 outline-none shadow-sm"
+                    : "rounded-xl bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-300 outline-none shadow-sm",
                 )}
               />
               {inputSearch && (

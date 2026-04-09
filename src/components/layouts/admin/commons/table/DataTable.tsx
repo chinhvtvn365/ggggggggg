@@ -1295,7 +1295,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                           title="Chỉnh sửa"
                           className={
                             softActionIcons
-                              ? "inline-flex items-center justify-center w-7 h-7 rounded-md text-slate-400 transition-colors group-hover/row:text-blue-600 group-hover/row:bg-blue-50 hover:text-blue-700 hover:bg-blue-50"
+                              ? "inline-flex items-center justify-center w-7 h-7 rounded-md text-slate-300 transition-colors group-hover/row:text-blue-600 group-hover/row:bg-blue-50 hover:text-blue-700 hover:bg-blue-50"
                               : "inline-flex items-center justify-center w-8 h-8 rounded-lg text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors"
                           }
                           onClick={() => {
@@ -1374,7 +1374,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
     // ─── HEADER COLUMNS ──────────────────────────────────────────────────────────
 
     const renderHeaderColumns = () => (
-      <tr className="bg-slate-50 border-b border-slate-100">
+      <tr className="bg-slate-100/50 border-b-2 border-slate-200">
         {crudButtons.delete.active &&
           crudButtons.delete.type === DELETE_TYPE_MULTI &&
           (!crudButtons.delete.permission ||
