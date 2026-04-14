@@ -9,7 +9,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from "react";
-import { Button, Modal } from "@heroui/react";
+import { Button, Modal, Chip, Table } from "@heroui/react";
 import { useFormContext } from "react-hook-form";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 
@@ -88,7 +88,6 @@ interface TableConfig {
   columns: TableColumn[];
   key?: string;
   stickyLeftColumns?: number;
-  unifiedToolbar?: boolean;
   tableStyles: TableStyles;
   topTableCustom?: () => React.ReactNode;
   customList?: CustomListItem[];
@@ -201,7 +200,6 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
       pagination,
       columns,
       stickyLeftColumns = 0,
-      unifiedToolbar = false,
       tableStyles,
       topTableCustom,
       customList,
@@ -261,6 +259,8 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
       (!crudButtons.delete.permission ||
         (crudButtons.delete.permission as string) in granted);
 
+    const isMultiDeleteEnabled = getDeletePermission();
+
     const calculateGroupNumber = (
       groupByField: string,
       value: unknown,
@@ -289,7 +289,59 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
     const hasVerticalGridlines = tableStyles?.verticalGridlines !== false;
     const rowCellPaddingY =
       tableStyles?.rowSpacing === "comfortable" ? "py-3" : "py-2.5";
-    const softActionIcons = Boolean(tableStyles?.softActionIcons);
+
+    const getDataColumnPhysicalIndex = (colIdx: number): number =>
+      colIdx + (isMultiDeleteEnabled ? 1 : 0) + (rowExpansion ? 1 : 0);
+
+    const toPixelValue = (value: unknown): number | null => {
+      if (typeof value === "number" && Number.isFinite(value)) return value;
+      if (typeof value === "string") {
+        const parsed = Number.parseFloat(value.replace("px", ""));
+        return Number.isFinite(parsed) ? parsed : null;
+      }
+      return null;
+    };
+
+    const getDataColumnWidth = (columnIndex: number): number => {
+      const col = columns[columnIndex];
+      if (!col) return 120;
+
+      const widthFromStyle = toPixelValue(col.style?.width);
+      if (widthFromStyle) return widthFromStyle;
+
+      const widthFromConfig = toPixelValue(col.width);
+      if (widthFromConfig) return widthFromConfig;
+
+      const minWidthFromStyle = toPixelValue(col.style?.minWidth);
+      if (minWidthFromStyle) return minWidthFromStyle;
+
+      return 120;
+    };
+
+    const getStickyLeftOffset = (physicalIndex: number): number => {
+      let left = 0;
+
+      for (let idx = 0; idx < physicalIndex; idx++) {
+        if (isMultiDeleteEnabled && idx === 0) {
+          left += 44;
+          continue;
+        }
+
+        const rowExpansionIndex = isMultiDeleteEnabled ? 1 : 0;
+        if (rowExpansion && idx === rowExpansionIndex) {
+          left += 40;
+          continue;
+        }
+
+        const dataColumnIndex =
+          idx - (isMultiDeleteEnabled ? 1 : 0) - (rowExpansion ? 1 : 0);
+        if (dataColumnIndex >= 0 && dataColumnIndex < columns.length) {
+          left += getDataColumnWidth(dataColumnIndex);
+        }
+      }
+
+      return left;
+    };
 
     const getStickyStyles = (
       physicalIndex: number,
@@ -300,30 +352,23 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
         return { className: "", style: {} };
       }
 
-      if (physicalIndex === 0) {
-        return {
-          className: `sticky left-0 z-30 ${backgroundClass}`,
-          style: {
-            minWidth: 44,
-            width: 44,
-            boxShadow: isHeader
-              ? "inset -1px 0 0 #f1f5f9"
-              : "inset -1px 0 0 #f1f5f9",
-          },
-        };
-      }
+      const isLastSticky = physicalIndex === stickyLeftColumns - 1;
 
-      if (physicalIndex === 1) {
-        return {
-          className: `sticky z-20 ${backgroundClass}`,
-          style: {
-            left: 44,
-            boxShadow: "8px 0 10px -10px rgba(15, 23, 42, 0.35)",
-          },
-        };
-      }
-
-      return { className: "", style: {} };
+      return {
+        className: `sticky ${isHeader ? "z-30" : "z-20"} ${backgroundClass}`,
+        style: {
+          left: getStickyLeftOffset(physicalIndex),
+          ...(isMultiDeleteEnabled && physicalIndex === 0
+            ? {
+                minWidth: 44,
+                width: 44,
+              }
+            : {}),
+          ...(isLastSticky
+            ? { boxShadow: "8px 0 10px -10px rgba(15, 23, 42, 0.35)" }
+            : {}),
+        },
+      };
     };
 
     // ─── REF METHODS ────────────────────────────────────────────────────────────
@@ -738,45 +783,36 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
       const totalRows = datatableReducer.totalRows ?? 0;
 
       return (
-        <div className="flex flex-row flex-wrap gap-2 mr-2">
+        <div className="flex flex-row flex-wrap gap-2">
           {!hideTotal && (
             <>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-blue-50 text-blue-700 font-semibold">
-                  <i className="fa-regular fa-circle-dot mr-1 text-[10px] text-blue-600" />
-                  Tổng:{" "}
-                  {formatNumberWithDots(
-                    isPageMultipleTable ? totalRecord : totalRows,
-                  )}
-                </span>
-                {customTopTag.map((item, index) => (
-                  <span
-                    key={index}
-                    style={item?.style}
-                    className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                      item.severity === "success"
-                        ? "bg-green-100 text-green-700"
-                        : item.severity === "warning"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : item.severity === "danger"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-gray-100 text-gray-700"
-                    }`}
-                  >
-                    {item.icon && (
-                      <i className={`${item.icon} mr-1 text-[10px]`} />
-                    )}
-                    {item.title}: {item.value}
-                  </span>
-                ))}
-              </div>
+              <Chip variant="soft" color="accent" size="sm">
+                Tổng: {formatNumberWithDots(isPageMultipleTable ? totalRecord : totalRows)}
+              </Chip>
+              {customTopTag.map((item, index) => (
+                <Chip
+                  key={index}
+                  variant="soft"
+                  color={
+                    item.severity === "success"
+                      ? "success"
+                      : item.severity === "warning"
+                        ? "warning"
+                        : item.severity === "danger"
+                          ? "danger"
+                          : "default"
+                  }
+                  size="sm"
+                  style={item?.style}
+                >
+                  {item.icon ? <i className={item.icon} /> : null}
+                  {item.title}: {item.value}
+                </Chip>
+              ))}
               {selected && selected.length > 0 && (
-                <div>
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs bg-amber-600 text-white font-semibold shadow-sm">
-                    <i className="fas fa-check-circle mr-1 text-[10px]" />
-                    Đã chọn: {selected.length}
-                  </span>
-                </div>
+                <Chip variant="primary" color="warning" size="sm">
+                  Đã chọn: {selected.length}
+                </Chip>
               )}
             </>
           )}
@@ -808,23 +844,21 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                 ? totalRecord
                 : (datatableReducer.totalRows ?? 0),
             )}
-          <div className={filterToolsCfg?.smallMode ? "p-2" : ""}>
-            {filterToolsCfg && filterToolsCfg.component == null ? (
-              <FilterTools
-                metadata={metadata}
-                id={id}
-                params={params}
-                renderTableInfo={renderTableInfo}
-                onInteract={() => dispatch(setId(id))}
-              />
-            ) : (
-              <div
-                className={colFilterTools || "col-md-9"}
-                onClick={() => dispatch(setId(id))}
-              >
-                {filterToolsCfg?.component?.()}
-              </div>
-            )}
+          <div
+            className={`flex flex-wrap items-center justify-between gap-3 ${
+              filterToolsCfg?.smallMode ? "p-2" : ""
+            }`}
+          >
+            <div className="min-w-0">{renderTableInfo()}</div>
+            <div className="min-w-0 ml-auto" onClick={() => dispatch(setId(id))}>
+              {filterToolsCfg && filterToolsCfg.component == null ? (
+                <FilterTools metadata={metadata} id={id} params={params} />
+              ) : (
+                <div className={colFilterTools || "col-md-9"}>
+                  {filterToolsCfg?.component?.()}
+                </div>
+              )}
+            </div>
           </div>
         </>
       );
@@ -837,57 +871,30 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
       rowData: Record<string, unknown>,
       index: number,
     ) => {
-      const base = `inline-flex items-center justify-center px-2 py-1 text-sm transition-all duration-200 ${
-        item.rounded ? "rounded-full" : "rounded"
-      } ${item.raised ? "shadow-md hover:shadow-lg" : ""}`;
-
-      let colorCls = "";
-      if (item.text && !item.outlined) {
-        colorCls =
-          item.color === "success"
-            ? "text-green-600 hover:bg-green-50"
-            : item.color === "danger"
-              ? "text-red-600 hover:bg-red-50"
-              : item.color === "warning"
-                ? "text-yellow-600 hover:bg-yellow-50"
-                : item.color === "info"
-                  ? "text-blue-600 hover:bg-blue-50"
-                  : "text-gray-600 hover:bg-gray-50";
-      } else if (item.outlined) {
-        colorCls =
-          item.color === "success"
-            ? "border border-green-600 text-green-600 hover:bg-green-50"
-            : item.color === "danger"
-              ? "border border-red-600 text-red-600 hover:bg-red-50"
-              : item.color === "warning"
-                ? "border border-yellow-600 text-yellow-600 hover:bg-yellow-50"
-                : item.color === "info"
-                  ? "border border-blue-600 text-blue-600 hover:bg-blue-50"
-                  : "border border-gray-600 text-gray-600 hover:bg-gray-50";
-      } else {
-        colorCls =
-          item.color === "success"
-            ? "bg-green-600 text-white hover:bg-green-700"
-            : item.color === "danger"
-              ? "bg-red-600 text-white hover:bg-red-700"
-              : item.color === "warning"
-                ? "bg-yellow-600 text-white hover:bg-yellow-700"
-                : item.color === "info"
-                  ? "bg-blue-600 text-white hover:bg-blue-700"
-                  : "bg-gray-600 text-white hover:bg-gray-700";
-      }
+      const variant = item.outlined
+        ? "outline"
+        : item.text
+          ? "ghost"
+          : item.color === "danger"
+            ? "danger"
+            : "primary";
 
       return (
-        <button
+        <Button
           key={index}
-          type="button"
-          title={item.title}
-          className={`${base} ${colorCls} ${item.className || ""}`}
-          onClick={() => item.onClick(rowData)}
+          aria-label={item.title}
+          size="sm"
+          variant={variant as
+            | "outline"
+            | "ghost"
+            | "danger"
+            | "primary"}
+          className={item.className || ""}
+          onPress={() => item.onClick(rowData)}
         >
-          {item.icon && <i className={`${item.icon}${item.label ? "" : ""}`} />}
+          {item.icon && <i className={item.icon} />}
           {item.label && <span>{item.label}</span>}
-        </button>
+        </Button>
       );
     };
 
@@ -907,7 +914,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
               rowExpansion.showGridlines
                 ? "border-collapse border border-gray-300"
                 : ""
-            } ${rowExpansion.customClassName || ""}`}
+            } nested-table ${rowExpansion.customClassName || ""}`}
           >
             <thead className="text-xs  bg-gray-50">
               <tr>
@@ -1046,24 +1053,31 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
         );
       }
       return (
-        <div className="p-1">
+        <div className="flex items-center gap-2 p-1">
           {showGroupCount && (
-            <span className="font-bold text-lg ml-6 mr-5">
-              {groupIndex[groupValue[groupRowsBy] as string]}{" "}
-            </span>
+            <Chip
+              variant="flat"
+              color="default"
+              size="sm"
+              className="font-bold ml-4"
+            >
+              {groupIndex[groupValue[groupRowsBy] as string]}
+            </Chip>
           )}
-          {showGroupCount && (
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs bg-blue-600 text-white font-semibold shadow-sm ml-2 mr-2">
-              <i className="fas fa-circle text-[6px] mr-1" />
-              Tổng:{" "}
-              {formatNumberWithDots(
-                calculateGroupNumber(groupRowsBy, groupValue[groupRowsBy]),
-              )}
-            </span>
-          )}
-          <span className="font-bold">
-            {groupValue[groupRowsBy] as string}{" "}
+          <span className="font-bold text-slate-700">
+            {groupValue[groupRowsBy] as string}
           </span>
+          {showGroupCount && (
+            <Chip
+              size="sm"
+              color="primary"
+              variant="shadow"
+              startContent={<i className="fas fa-circle text-[6px] ml-1" />}
+              className="font-semibold"
+            >
+              Tổng: {formatNumberWithDots(calculateGroupNumber(groupRowsBy, groupValue[groupRowsBy]))}
+            </Chip>
+          )}
         </div>
       );
     };
@@ -1117,14 +1131,14 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
         if (groupRowsBy && item[groupRowsBy] !== lastGroupValue) {
           lastGroupValue = item[groupRowsBy];
           rows.push(
-            <tr
+            <Table.Row
               key={`group-${String(lastGroupValue)}-${rowIndex}`}
               className="bg-gray-100"
             >
-              <td colSpan={getTotalColCount()} className="px-4 py-2">
+              <Table.Cell colSpan={getTotalColCount()} className="px-4 py-2">
                 {renderGroupHeader(item)}
-              </td>
-            </tr>,
+              </Table.Cell>
+            </Table.Row>,
           );
         }
 
@@ -1132,17 +1146,15 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
           tableStyles?.stripedRows && rowIndex % 2 === 1
             ? "bg-slate-100/70"
             : "bg-white";
-        const rowCls = `group/row border-b border-slate-100 transition-all duration-200 ${stripedClass} hover:bg-blue-50/30 hover:shadow-md hover:-translate-y-[1px] relative z-0 hover:z-10 ${getRowClassName(item)}`;
+        const rowCls = `group ${getRowClassName(item)}`;
+        const cellBgClass = `${stripedClass} group-hover:!bg-slate-100/80`;
 
         rows.push(
-          <tr key={(item.id as string) || rowIndex} className={rowCls}>
+          <Table.Row key={(item.id as string) || rowIndex} className={rowCls}>
             {/* Multi-delete checkbox */}
-            {crudButtons.delete.active &&
-              crudButtons.delete.type === DELETE_TYPE_MULTI &&
-              (!crudButtons.delete.permission ||
-                (crudButtons.delete.permission as string) in granted) && (
-                <td
-                  className={`px-3 ${rowCellPaddingY} ${hasVerticalGridlines ? "border-r border-slate-100" : ""} ${
+            {isMultiDeleteEnabled && (
+                <Table.Cell
+                  className={`${cellBgClass} px-3 ${rowCellPaddingY} ${hasVerticalGridlines ? "border-r border-slate-100" : ""} ${
                     getStickyStyles(
                       0,
                       false,
@@ -1162,17 +1174,33 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                     disabled={Boolean(item.disabled)}
                     onChange={(e) => toggleRowSelection(item, e.target.checked)}
                   />
-                </td>
+                  </Table.Cell>
               )}
 
             {/* Row expansion toggle */}
             {rowExpansion && (
-              <td className="px-3 py-1 w-10">
+                <Table.Cell
+                  className={`${cellBgClass} px-3 py-1 w-10 ${
+                    getStickyStyles(
+                      isMultiDeleteEnabled ? 1 : 0,
+                      false,
+                      stripedClass,
+                    ).className
+                  }`}
+                  style={{
+                    ...getStickyStyles(
+                      isMultiDeleteEnabled ? 1 : 0,
+                      false,
+                      stripedClass,
+                    ).style,
+                  }}
+                >
                 {allowExpansion(item) && (
-                  <button
-                    type="button"
-                    className="text-gray-500 hover:text-gray-700 text-xs"
-                    onClick={() => {
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    variant="ghost"
+                    onPress={() => {
                       const rowId = item.id as string;
                       setExpandedRows((prev) => {
                         const next = { ...prev };
@@ -1189,24 +1217,18 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                           : "fa-chevron-right"
                       }`}
                     />
-                  </button>
+                  </Button>
                 )}
-              </td>
+              </Table.Cell>
             )}
 
             {/* Data columns */}
             {columns.map((col, colIdx) => (
-              <td
+              <Table.Cell
                 key={col.name}
-                className={`px-2 ${rowCellPaddingY} ${hasVerticalGridlines ? "border-r border-slate-100" : ""} ${
+                className={`${cellBgClass} px-2 ${rowCellPaddingY} ${hasVerticalGridlines ? "border-r border-slate-100" : ""} ${
                   getStickyStyles(
-                    colIdx +
-                      (crudButtons.delete.active &&
-                      crudButtons.delete.type === DELETE_TYPE_MULTI &&
-                      (!crudButtons.delete.permission ||
-                        (crudButtons.delete.permission as string) in granted)
-                        ? 1
-                        : 0),
+                    getDataColumnPhysicalIndex(colIdx),
                     false,
                     stripedClass,
                   ).className
@@ -1216,13 +1238,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                     "left") as React.CSSProperties["textAlign"],
                   fontSize: "13px",
                   ...getStickyStyles(
-                    colIdx +
-                      (crudButtons.delete.active &&
-                      crudButtons.delete.type === DELETE_TYPE_MULTI &&
-                      (!crudButtons.delete.permission ||
-                        (crudButtons.delete.permission as string) in granted)
-                        ? 1
-                        : 0),
+                    getDataColumnPhysicalIndex(colIdx),
                     false,
                     stripedClass,
                   ).style,
@@ -1273,14 +1289,14 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                 ) : (
                   (item[col.dataField] as React.ReactNode)
                 )}
-              </td>
+              </Table.Cell>
             ))}
 
             {/* Update action column */}
             {crudButtons.update.active &&
               hasEditableColumn(columns) &&
               isAuthReady && (
-                <td className="px-3 py-1">
+                <Table.Cell className={`${cellBgClass} px-3 py-1`}>
                   <div className="flex gap-1.5 justify-end">
                     {customList?.map((btn, btnIdx) =>
                       renderCustomButton(btn, item, btnIdx),
@@ -1290,15 +1306,12 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                       (!crudButtons.update.permission ||
                         (crudButtons.update.permission as string) in
                           granted) && (
-                        <button
-                          type="button"
-                          title="Chỉnh sửa"
-                          className={
-                            softActionIcons
-                              ? "inline-flex items-center justify-center w-7 h-7 rounded-md text-slate-400 transition-colors group-hover/row:text-blue-600 group-hover/row:bg-blue-50 hover:text-blue-700 hover:bg-blue-50"
-                              : "inline-flex items-center justify-center w-8 h-8 rounded-lg text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors"
-                          }
-                          onClick={() => {
+                        <Button
+                          isIconOnly
+                          size="sm"
+                          variant="ghost"
+                          aria-label="Chỉnh sửa"
+                          onPress={() => {
                             if (
                               onEditAction &&
                               typeof onEditAction === "function"
@@ -1311,17 +1324,17 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                           }}
                         >
                           <i className="fas fa-edit text-sm" />
-                        </button>
+                        </Button>
                       )}
                   </div>
-                </td>
+                </Table.Cell>
               )}
 
             {/* Delete single action column */}
             {crudButtons.delete.active &&
               crudButtons.delete.type === DELETE_TYPE_SINGLE &&
               isAuthReady && (
-                <td className="px-3 py-1">
+                <Table.Cell className={`${cellBgClass} px-3 py-1`}>
                   <div className="flex gap-1.5 justify-end">
                     {customList?.map((btn, btnIdx) =>
                       renderCustomButton(btn, item, btnIdx),
@@ -1331,39 +1344,36 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                       (!crudButtons.delete.permission ||
                         (crudButtons.delete.permission as string) in
                           granted) && (
-                        <button
-                          type="button"
-                          title="Xóa"
-                          className={
-                            softActionIcons
-                              ? "inline-flex items-center justify-center w-7 h-7 rounded-md text-slate-400 transition-colors group-hover/row:text-rose-600 group-hover/row:bg-rose-50 hover:text-rose-700 hover:bg-rose-50"
-                              : "inline-flex items-center justify-center w-8 h-8 rounded-lg text-red-600 hover:bg-red-50 hover:shadow-sm transition-all duration-200"
-                          }
-                          onClick={() => {
+                        <Button
+                          isIconOnly
+                          size="sm"
+                          variant="danger-soft"
+                          aria-label="Xóa"
+                          onPress={() => {
                             setDeleteDialog(true);
                             setDeleteId(item.id as string);
                           }}
                         >
                           <i className="fas fa-trash-alt text-sm" />
-                        </button>
+                        </Button>
                       )}
                   </div>
-                </td>
+                </Table.Cell>
               )}
-          </tr>,
+          </Table.Row>,
         );
 
         // Expansion row
         if (rowExpansion && expandedRows[item.id as string]) {
           rows.push(
-            <tr
+            <Table.Row
               key={`expand-${(item.id as string) || rowIndex}`}
               className="bg-gray-50"
             >
-              <td colSpan={getTotalColCount()} className="px-4 py-2">
+              <Table.Cell colSpan={getTotalColCount()} className="px-4 py-2">
                 {renderRowExpansion(item)}
-              </td>
-            </tr>,
+              </Table.Cell>
+            </Table.Row>,
           );
         }
       });
@@ -1374,16 +1384,11 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
     // ─── HEADER COLUMNS ──────────────────────────────────────────────────────────
 
     const renderHeaderColumns = () => (
-      <tr className="bg-slate-50 border-b border-slate-100">
-        {crudButtons.delete.active &&
-          crudButtons.delete.type === DELETE_TYPE_MULTI &&
-          (!crudButtons.delete.permission ||
-            (crudButtons.delete.permission as string) in granted) && (
-            <th
-              className={`sticky top-0 z-20 px-3 py-3 text-xs uppercase tracking-wider text-slate-500 ${hasVerticalGridlines ? "border-r border-slate-100" : ""} ${
-                getStickyStyles(0, true, "bg-slate-50").className
-              }`}
-              style={{ ...getStickyStyles(0, true, "bg-slate-50").style }}
+      <>
+        {isMultiDeleteEnabled && (
+            <Table.Column
+              className={`sticky top-0 z-20 px-3 py-3 ${hasVerticalGridlines ? "border-r" : ""} ${getStickyStyles(0, true, "bg-white").className}`}
+              style={{ ...getStickyStyles(0, true, "bg-white").style }}
             >
               <input
                 type="checkbox"
@@ -1420,16 +1425,31 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                   }
                 }}
               />
-            </th>
+            </Table.Column>
           )}
 
-        {rowExpansion && <th className="px-3 py-2 w-10 bg-slate-50" />}
+        {rowExpansion && (
+          <Table.Column
+            className={`px-3 py-2 w-10 ${
+              getStickyStyles(isMultiDeleteEnabled ? 1 : 0, true, "bg-white")
+                .className
+            }`}
+            style={{
+              ...getStickyStyles(
+                isMultiDeleteEnabled ? 1 : 0,
+                true,
+                "bg-white",
+              ).style,
+            }}
+          />
+        )}
 
         {columns.map((col, colIdx) => (
-          <th
+          <Table.Column
             key={col.name}
-            className={`sticky top-0 z-20 px-2 py-3 uppercase font-semibold text-slate-500 bg-slate-50 text-xs tracking-wider ${hasVerticalGridlines ? "border-r border-slate-100" : ""} ${
-              getStickyStyles(colIdx + (crudButtons.delete.active && crudButtons.delete.type === DELETE_TYPE_MULTI && (!crudButtons.delete.permission || (crudButtons.delete.permission as string) in granted) ? 1 : 0), true, "bg-slate-50").className
+            className={`sticky top-0 z-20 px-2 py-3 text-sm ${hasVerticalGridlines ? "border-r" : ""} ${
+              getStickyStyles(getDataColumnPhysicalIndex(colIdx), true, "bg-white")
+                .className
             } ${
               col.alignHeader === "center"
                 ? "text-center"
@@ -1438,47 +1458,40 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                   : "text-left"
             }`}
             style={{
-              fontSize: "12px",
               width: col.width,
               ...getStickyStyles(
-                colIdx +
-                  (crudButtons.delete.active &&
-                  crudButtons.delete.type === DELETE_TYPE_MULTI &&
-                  (!crudButtons.delete.permission ||
-                    (crudButtons.delete.permission as string) in granted)
-                    ? 1
-                    : 0),
+                getDataColumnPhysicalIndex(colIdx),
                 true,
-                "bg-slate-50",
+                "bg-white",
               ).style,
               ...col.style,
             }}
           >
             {col.name}
-          </th>
+          </Table.Column>
         ))}
 
         {crudButtons.update.active &&
           hasEditableColumn(columns) &&
           isAuthReady && (
-            <th
+            <Table.Column
               style={{ fontSize: "12px", minWidth: "85px" }}
-              className="sticky top-0 z-20 px-2 py-2 text-right uppercase font-semibold text-slate-500 bg-slate-50 tracking-wider"
+              className="sticky top-0 z-20 px-2 py-2 text-right"
             >
               Thao tác
-            </th>
+            </Table.Column>
           )}
         {crudButtons.delete.active &&
           crudButtons.delete.type === DELETE_TYPE_SINGLE &&
           isAuthReady && (
-            <th
+            <Table.Column
               style={{ fontSize: "12px", minWidth: "85px" }}
-              className="sticky top-0 z-20 px-2 py-2 text-right uppercase font-semibold text-slate-500 bg-slate-50 tracking-wider"
+              className="sticky top-0 z-20 px-2 py-2 text-right"
             >
               Thao tác
-            </th>
+            </Table.Column>
           )}
-      </tr>
+      </>
     );
 
     // ─── PAGINATION ──────────────────────────────────────────────────────────────
@@ -1504,15 +1517,15 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
       });
 
       return (
-        <div className="flex w-full items-center justify-between py-3 px-4 bg-gradient-to-r from-slate-50 to-blue-50/20 border-t-2 border-slate-200/70 flex-wrap gap-3">
-          <div className="flex items-center gap-2 text-xs text-slate-600 font-medium">
+        <div className="flex w-full items-center justify-between py-3 px-4 flex-wrap gap-3">
+          <div className="flex items-center gap-2 text-sm">
             <span>
               Từ {(currentPage - 1) * pageRows + 1} đến{" "}
               {Math.min(currentPage * pageRows, totalRows)} trên tổng số{" "}
               {formatNumberWithDots(totalRows)}
             </span>
             <select
-              className="border-2 border-slate-300 rounded-lg px-3 py-1 text-xs font-medium hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+              className="px-2 py-1"
               value={pageRows}
               onChange={(e) => onPage(0, 0, Number(e.target.value))}
             >
@@ -1524,22 +1537,24 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
             </select>
           </div>
           <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => onPage(0, 0, pageRows)}
-              disabled={currentPage === 1}
-              className="px-3 py-1.5 rounded-lg border-2 border-slate-300 hover:bg-slate-50 hover:border-blue-400 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold transition-all duration-200"
+            <Button
+              size="sm"
+              variant="outline"
+              onPress={() => onPage(0, 0, pageRows)}
+              isDisabled={currentPage === 1}
             >
               «
-            </button>
-            <button
-              onClick={() =>
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onPress={() =>
                 onPage((currentPage - 2) * pageRows, currentPage - 2, pageRows)
               }
-              disabled={currentPage === 1}
-              className="px-3 py-1.5 rounded-lg border-2 border-slate-300 hover:bg-slate-50 hover:border-blue-400 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold transition-all duration-200"
+              isDisabled={currentPage === 1}
             >
               ‹
-            </button>
+            </Button>
             {pageNumbers.map((page, index, array) => {
               const prevPage = array[index - 1];
               const showEllipsis =
@@ -1549,39 +1564,38 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                   {showEllipsis && (
                     <span className="px-2 text-slate-400 font-bold">...</span>
                   )}
-                  <button
-                    onClick={() =>
+                  <Button
+                    size="sm"
+                    variant={currentPage === page ? "primary" : "outline"}
+                    onPress={() =>
                       onPage((page - 1) * pageRows, page - 1, pageRows)
                     }
-                    className={`px-3 py-1.5 rounded-lg border-2 text-xs font-semibold transition-all duration-200 ${
-                      currentPage === page
-                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-600 shadow-md shadow-blue-500/30"
-                        : "border-slate-300 hover:bg-slate-50 hover:border-blue-400 text-slate-700"
-                    }`}
                   >
                     {page}
-                  </button>
+                  </Button>
                 </Fragment>
               );
             })}
-            <button
-              onClick={() =>
+            <Button
+              size="sm"
+              variant="outline"
+              onPress={() =>
                 onPage(currentPage * pageRows, currentPage, pageRows)
               }
-              disabled={currentPage === totalPages}
-              className="px-3 py-1.5 rounded-lg border-2 border-slate-300 hover:bg-slate-50 hover:border-blue-400 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold transition-all duration-200"
+              isDisabled={currentPage === totalPages}
             >
               ›
-            </button>
-            <button
-              onClick={() =>
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onPress={() =>
                 onPage((totalPages - 1) * pageRows, totalPages - 1, pageRows)
               }
-              disabled={currentPage === totalPages}
-              className="px-3 py-1.5 rounded-lg border-2 border-slate-300 hover:bg-slate-50 hover:border-blue-400 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold transition-all duration-200"
+              isDisabled={currentPage === totalPages}
             >
               »
-            </button>
+            </Button>
           </div>
         </div>
       );
@@ -1592,95 +1606,43 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
     return (
       <Fragment>
         <div className="datatable-wrapper">
-          {!unifiedToolbar && (
-            <div className="datatable-toolbar">
-              <CrudButtons
-                className=""
-                metadata={metadata}
-                data={dataBinding}
-                setHasChangeData={setHasChangeData}
-                setBack={setDataBinding}
-                selected={selected}
-                setSelected={setSelected}
-                granted={granted}
-              />
-            </div>
-          )}
+          <div className="datatable-toolbar">
+            <CrudButtons
+              className=""
+              metadata={metadata}
+              data={dataBinding}
+              setHasChangeData={setHasChangeData}
+              setBack={setDataBinding}
+              selected={selected}
+              setSelected={(val) => setSelected(val ?? [])}
+              granted={granted}
+            />
+          </div>
           <div className="">
             {topTableCustom && <>{topTableCustom()}</>}
 
-            {unifiedToolbar && (
-              <div className="mb-2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
-                {tableConfig.additionalHeader &&
-                  tableConfig.additionalHeader(
-                    isPageMultipleTable
-                      ? totalRecord
-                      : (datatableReducer.totalRows ?? 0),
-                  )}
-
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 flex-wrap min-w-0">
-                    <CrudButtons
-                      className="border-0 shadow-none bg-transparent p-0"
-                      metadata={metadata}
-                      data={dataBinding}
-                      setHasChangeData={setHasChangeData}
-                      setBack={setDataBinding}
-                      selected={selected}
-                      setSelected={setSelected}
-                      granted={granted}
-                    />
-                    {renderTableInfo()}
-                  </div>
-
-                  {filterToolsCfg && filterToolsCfg.component == null && (
-                    <div
-                      className="min-w-0"
-                      onClick={() => dispatch(setId(id))}
-                    >
-                      <FilterTools
-                        metadata={metadata}
-                        id={id}
-                        params={params}
-                        onInteract={() => dispatch(setId(id))}
-                        compact
-                      />
-                    </div>
-                  )}
-
-                  {filterToolsCfg?.component && (
-                    <div
-                      className={colFilterTools || "col-md-9"}
-                      onClick={() => dispatch(setId(id))}
-                    >
-                      {filterToolsCfg.component()}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {!unifiedToolbar && renderHeader()}
+            {renderHeader()}
 
             <div
-              className={`relative overflow-x-auto rounded-xl border border-slate-200 bg-white admin-elevated stagger-fade-in-2 font-admin-table ${
+              className={`overflow-x-auto bg-white font-admin-table ${
                 tableStyles?.className || ""
               }`}
             >
-              <table
+              <Table
                 className={`w-full text-sm text-left ${
                   tableStyles?.showGridlines ? "border-collapse" : ""
                 }`}
               >
-                {headerColumnGroup ? (
-                  <thead>{headerColumnGroup as React.ReactNode}</thead>
-                ) : (
-                  <thead>{renderHeaderColumns()}</thead>
-                )}
-                <tbody>
+                <Table.Content aria-label="DataTable">
+                  {headerColumnGroup ? (
+                    <Table.Header>{headerColumnGroup as React.ReactNode}</Table.Header>
+                  ) : (
+                    <Table.Header>{renderHeaderColumns()}</Table.Header>
+                  )}
+                  <Table.Body>
                   {sortedDataBinding.length === 0 ? (
-                    <tr>
-                      <td
+                    <Table.Row>
+                      <Table.Cell
                         colSpan={getTotalColCount()}
                         className="px-4 py-12 text-center text-xs text-slate-500 bg-slate-50/30"
                       >
@@ -1693,13 +1655,14 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                             Không tìm thấy dữ liệu nào
                           </p>
                         </div>
-                      </td>
-                    </tr>
+                      </Table.Cell>
+                    </Table.Row>
                   ) : (
                     renderTableRows()
                   )}
-                </tbody>
-              </table>
+                  </Table.Body>
+                </Table.Content>
+              </Table>
 
               {renderPagination()}
             </div>
@@ -1835,40 +1798,39 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
           isOpen={deleteDialog}
           onOpenChange={(open) => !open && setDeleteDialog(false)}
         >
-          <Modal.Backdrop className="bg-black/80 modal-backdrop">
-            <Modal.Container className="items-center justify-center modal-container" placement="top">
-              <Modal.Dialog className="bg-white rounded-xl max-w-sm w-full shadow-2xl modal-dialog">
+          <Modal.Backdrop>
+            <Modal.Container placement="top">
+              <Modal.Dialog>
                 <Modal.CloseTrigger />
-                <Modal.Header className="">
+                <Modal.Header>
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-orange-50">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-full">
                       <i className="fas fa-exclamation-triangle text-xl text-orange-500" />
                     </div>
-                    <Modal.Heading className="text-lg font-semibold text-gray-900">
+                    <Modal.Heading>
                       Xác nhận xóa
                     </Modal.Heading>
                   </div>
                 </Modal.Header>
-                <Modal.Body className="px-6 py-5">
-                  <p className="text-gray-700">
+                <Modal.Body>
+                  <p>
                     Bạn có chắc chắn muốn xóa dữ liệu này?
                   </p>
                 </Modal.Body>
-                <Modal.Footer className="flex gap-2 justify-end px-6 py-3.5 bg-gray-50 border-t border-gray-200">
-                 
+                <Modal.Footer>
                   <Button
-                    className="font-medium bg-red-600 hover:bg-red-700 text-white border-none"
+                    variant="danger"
                     onPress={() => {
                       void deleteSingle();
                     }}
                   >
-                    <i className="fas fa-trash-alt mr-1" /> Xóa
+                    <i className="fas fa-trash-alt" /> Xóa
                   </Button>
-                   <Button
+                  <Button
+                    variant="outline"
                     onPress={() => setDeleteDialog(false)}
-                    className="font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 border-none"
                   >
-                    <i className="fas fa-times mr-1" /> Đóng
+                    <i className="fas fa-times" /> Đóng
                   </Button>
                 </Modal.Footer>
               </Modal.Dialog>

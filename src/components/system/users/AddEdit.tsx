@@ -238,5 +238,3 @@ const UserAddEditContent = ({ data, dataSource }: { data: any, dataSource: any }
 };
 
 export default UserAddEditContent;
-
-export default UserAddEditContent;

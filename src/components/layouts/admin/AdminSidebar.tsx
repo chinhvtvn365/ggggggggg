@@ -121,52 +121,14 @@ export default function AdminSidebar({ setBreadcrumbsData, setUserInfo: setParen
   }, [model, pathname, setBreadcrumbsData]);
 
   return (
-    <aside
-      className="w-72 bg-white flex flex-col overflow-hidden relative border-r border-slate-200/80 shadow-[2px_0_14px_rgba(15,23,42,0.05)] stagger-fade-in"
-      style={{ borderRightWidth: "0.5px" }}
-    >
-      <div className="px-6 py-6 border-b border-slate-200/50 bg-white">
-        <Link href="/" className="flex items-center gap-3 relative group">
-          <Image
-            src="/layout/images/logo.png"
-            height={48}
-            width={48}
-            alt="Logo"
-            className="drop-shadow-[0_4px_12px_rgba(15,23,42,0.15)]"
-          />
-          <div className="flex flex-col min-w-0">
-            <span className="text-lg text-slate-900 font-extrabold uppercase tracking-widest font-admin-heading leading-tight">
-              Chính quyền
-            </span>
-            <hr className="my-0.5 border-slate-100" />
-            <span className="text-[11px] text-slate-500 font-medium tracking-wider">
-              Hệ thống quản trị
-            </span>
-          </div>
-        </Link>
-      
-        {/* Search Input */}
-        {/* <div className="relative">
-          <i className="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-white text-xs pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Tìm kiếm..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-8 pl-8 pr-2.5 text-xs bg-white/20 border border-white/30 text-white placeholder:text-white rounded-lg hover:border-white/50 hover:bg-white/30 focus:border-white focus:outline-none focus:ring-1 focus:ring-white/40 focus:bg-white/30 transition-all"
-          />
-        </div> */}
-      </div>
-
-      <div className="flex-1 overflow-y-auto py-2 px-2 relative bg-white
-        [&::-webkit-scrollbar]:w-1.5
-        [&::-webkit-scrollbar-track]:bg-white
-        [&::-webkit-scrollbar-track]:rounded-full
-        [&::-webkit-scrollbar-track]:m-1
-        [&::-webkit-scrollbar-thumb]:bg-slate-200
-        [&::-webkit-scrollbar-thumb]:rounded-full
-        [&::-webkit-scrollbar-thumb]:hover:bg-slate-300
-        [&::-webkit-scrollbar-thumb]:transition-colors">
+    <aside className="w-[240px] flex flex-col overflow-hidden relative z-20 shadow-[1px_0_10px_rgba(0,0,0,0.02)] bg-white border-r border-slate-100">
+      {/* Sidebar Content */}
+      <div className="flex-1 overflow-y-auto pt-6 pb-8 px-2
+        [&::-webkit-scrollbar]:w-1
+        [&::-webkit-scrollbar-track]:bg-transparent
+        [&::-webkit-scrollbar-thumb]:bg-slate-100
+        hover:[&::-webkit-scrollbar-thumb]:bg-blue-100/60
+        transition-all scroll-smooth">
         <AdminMenu model={model} />
       </div>
     </aside>

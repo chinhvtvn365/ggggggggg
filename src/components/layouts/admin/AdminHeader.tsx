@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Dropdown } from "@heroui/react";
+import { Dropdown, Button, Avatar } from "@heroui/react";
 import Image from "next/image";
 
 import cacheService from "@/services/cache.service";
@@ -62,7 +62,7 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
       if (response?.status === 200 && response?.data?.result) {
         const result = response.data.result;
         tokenService.storeToken(result.accessToken);
-        
+
         const tokenDecode = decodeURIComponent(
           escape(utilsService.base64ToArray(result.accessToken?.split(".")[1]))
         );
@@ -82,30 +82,32 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
   };
 
   return (
-    <header className="h-16 border-b border-gray-200 bg-[#0f6bbf] text-white shadow-sm flex items-center justify-between px-4">
+    <header className="h-16 border-b flex items-center justify-between px-8 sticky top-0 z-30">
       {/* Left Section */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-6">
         {onMenuToggle && (
-          <button
-            onClick={onMenuToggle}
-            className="p-2 rounded hover:bg-white/10 transition-colors"
+          <Button
+            isIconOnly
+            variant="ghost"
+            onPress={onMenuToggle}
             aria-label="Toggle menu"
           >
             <i className="fas fa-bars text-lg" />
-          </button>
+          </Button>
         )}
 
-        <Link href="/" className="flex items-center gap-2">
-          <Image
-            src="/layout/images/logo.png"
-            height={36}
-            width={36}
-            alt="Logo"
-            className="rounded"
-          />
-          <div className="hidden sm:flex flex-col">
-  
-            <span className="text-xs font-semibold uppercase tracking-wide">
+        <Link href="/quan-tri" className="hidden sm:flex items-center gap-4">
+          <div className="relative w-11 h-11 flex items-center justify-center">
+            <Image
+              src="/layout/images/logo.png"
+              height={44}
+              width={44}
+              alt="Logo"
+              className="object-contain"
+            />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[19px] font-bold uppercase tracking-tight leading-loose whitespace-nowrap">
               Chính quyền điện tử
             </span>
           </div>
@@ -114,38 +116,33 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
 
       {/* Right Section */}
       <div className="flex items-center gap-4">
-       <Link
+        <Button
+          as={Link}
           href="/"
           target="_blank"
-          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded transition-colors text-md"
+          size="sm"
+          variant="outline"
+          className="hidden md:flex"
         >
-          <i className="fas fa-home text-md" />
-          <span className="font-medium">Trang chủ</span>
-        </Link>
+          <i className="fas fa-home text-sm" />
+          <span>Trang chủ</span>
+        </Button>
 
-      <Dropdown>
+        <Dropdown>
           <Dropdown.Trigger>
-            {/* FIX: Remove button wrapper to prevent nested button hydration error */}
-            <div className="flex items-center gap-2 cursor-pointer group">
-              <span className="text-xs font-medium hidden lg:block text-white">
-                {userInfo?.firstName || "User"}
+            <Button variant="ghost" size="sm">
+              <span className="text-xs font-bold hidden lg:block">
+                {userInfo?.firstName || "Quản trị viên"}
               </span>
-              <Image
-                src="/layout/images/avatar-default.png"
-                alt="User avatar"
-                width={32}
-                height={32}
-                className="w-8 h-8 rounded-full border-2 border-white/30 group-hover:border-white transition-colors"
-              />
-              <i className="fas fa-chevron-down text-xs opacity-70 group-hover:opacity-100" />
-            </div>
+              <Avatar src="/layout/images/avatar-default.png" size="sm" />
+              <i className="fas fa-chevron-down text-[10px]" />
+            </Button>
           </Dropdown.Trigger>
-          
+
           <Dropdown.Popover placement="bottom end">
-            <Dropdown.Menu 
+            <Dropdown.Menu
               aria-label="Profile Actions"
               onAction={(key) => {
-                // Xử lý chuyển trang thay vì dùng onClick trong DropdownItem (Chuẩn HeroUI)
                 if (key === "profile") router.push("/quan-tri/profile");
                 if (key === "logout") handleLogout();
                 if (key === "re-login" && userInfo?.currentUser) {
@@ -155,23 +152,22 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
             >
               <Dropdown.Item id="profile" textValue="Thông tin cá nhân">
                 <div className="flex items-center gap-2">
-                  <i className="fas fa-user-circle text-gray-400" />
+                  <i className="fas fa-user-circle" />
                   <span>Thông tin cá nhân</span>
                 </div>
               </Dropdown.Item>
 
               {userInfo?.isAdminLogin && !userInfo?.role?.includes("admin") && (
                 <Dropdown.Item id="re-login" textValue="Đăng nhập lại">
-                  <div className="flex items-center gap-2 text-primary font-medium">
+                  <div className="flex items-center gap-2">
                     <i className="fas fa-sign-in-alt" />
                     <span>Đăng nhập {userInfo.currentUser}</span>
                   </div>
                 </Dropdown.Item>
               )}
 
-              <Dropdown.Item 
-                id="logout" 
-                className="text-red-600" 
+              <Dropdown.Item
+                id="logout"
                 textValue="Đăng xuất"
               >
                 <div className="flex items-center gap-2">

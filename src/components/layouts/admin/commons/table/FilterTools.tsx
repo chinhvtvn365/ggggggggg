@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import { Dropdown, Switch, Input, Button, Label, DatePicker } from "@heroui/react";
+import { DatePicker, Dropdown, Switch, Input, Button } from "@heroui/react";
 import { parseDate, fromDate, getLocalTimeZone, toCalendarDate } from "@internationalized/date";
 import { useAppDispatch } from "@/lib/hooks";
 import { useDebouncedCallback } from "use-debounce";
@@ -56,7 +56,6 @@ interface FilterToolsProps {
   metadata: any;
   id?: string;
   params?: any;
-  renderTableInfo?: () => React.ReactNode;
   className?: string;
   onInteract?: () => void;
   compact?: boolean;
@@ -81,16 +80,14 @@ const safeToHeroDate = (value: any) => {
 
 const FilterTools: React.FC<FilterToolsProps> = ({
   metadata,
-  renderTableInfo,
   onInteract,
   className,
-  compact = false,
+  compact = true,
 }) => {
   const dispatch = useAppDispatch();
   const searchParams = useSearchParams();
 
   const { components, inputPlaceholder, inputWidth } = metadata.filterTools;
-  const softMode = Boolean(metadata?.filterTools?.softMode);
   const hasInitialized = useRef(false);
 
   const startEndProps = components.find(
@@ -99,8 +96,6 @@ const FilterTools: React.FC<FilterToolsProps> = ({
   const startDateFieldName = startEndProps?.startFieldName ?? "FromDate";
   const endDateFieldName = startEndProps?.endFieldName ?? "ToDate";
 
-  // Use any to bypass beta version type mismatches for DatePicker
-  const CustomDatePicker = DatePicker as any;
 
   // --- STATE ---
   const [filterValues, setFilterValues] = useState<any>(() => {
@@ -200,23 +195,11 @@ const FilterTools: React.FC<FilterToolsProps> = ({
 
         return (
           <div key={comp.name + idx} className={cn("", comp.width || "")}>
-            <Dropdown className="w-full">
+            <Dropdown>
               <Dropdown.Trigger>
-                <div
-                  role="button"
-                  tabIndex={0}
-                  className={cn(
-                    "w-full h-8 flex items-center justify-between text-sm font-medium transition-colors px-2.5 cursor-pointer select-none",
-                    softMode
-                      ? "rounded-xl bg-slate-50 border border-transparent hover:border-blue-200 focus:ring-2 focus:ring-blue-500/20"
-                      : "rounded-xl bg-white border border-slate-200 hover:border-slate-300",
-                  )}
-                >
-                  <span className="text-slate-700 truncate">
-                    {selectedItem?.label || comp.placeholder || "-- Chọn --"}
-                  </span>
-                  <i className="fas fa-chevron-down text-xs ml-2 text-slate-500 flex-shrink-0" />
-                </div>
+                <Button variant="outline" size="sm" endContent={<i className="fas fa-chevron-down" />}>
+                  {selectedItem?.label || comp.placeholder || "-- Chọn --"}
+                </Button>
               </Dropdown.Trigger>
               <Dropdown.Popover placement="bottom start">
                 <Dropdown.Menu
@@ -250,13 +233,13 @@ const FilterTools: React.FC<FilterToolsProps> = ({
       if (comp.type === "startEndDatePicker") {
         return (
           <div key={comp.name + idx} className="flex gap-2 items-center">
-            <div className="w-[140px]">
-              <CustomDatePicker
+            <div>
+              <DatePicker
                 label="Từ ngày"
                 labelPlacement="inside"
-                variant="bordered"
+                variant="outline"
+                size="sm"
                 showMonthAndYearPickers
-                className="w-full bg-white rounded-xl shadow-sm"
                 value={safeToHeroDate(filterValues?.[startDateFieldName])}
                 onChange={(val: any) => {
                   const updated = {
@@ -268,14 +251,14 @@ const FilterTools: React.FC<FilterToolsProps> = ({
                 }}
               />
             </div>
-            <span className="text-gray-400 font-medium">-</span>
-            <div className="w-[140px]">
-              <CustomDatePicker
+            <span>-</span>
+            <div>
+              <DatePicker
                 label="Đến ngày"
                 labelPlacement="inside"
-                variant="bordered"
+                variant="outline"
+                size="sm"
                 showMonthAndYearPickers
-                className="w-full bg-white rounded-xl shadow-sm"
                 value={safeToHeroDate(filterValues?.[endDateFieldName])}
                 onChange={(val: any) => {
                   const updated = {
@@ -302,7 +285,7 @@ const FilterTools: React.FC<FilterToolsProps> = ({
                 onFilter(isSelected, comp.name)
               }
             >
-              <Label className="text-sm text-gray-700">{comp.label}</Label>
+              {comp.label}
             </Switch>
           </div>
         );
@@ -313,81 +296,43 @@ const FilterTools: React.FC<FilterToolsProps> = ({
   };
 
   return (
-    <div className={cn("flex flex-col gap-2 w-full", compact ? "py-0" : "py-2", className)} onClick={onInteract}>
-      <div className="flex flex-col gap-2">
-        {renderTableInfo && renderTableInfo()}
-
-        <div className={cn("flex items-center gap-1.5 overflow-x-auto", compact ? "pb-0" : "pb-1")}>
-          {/* Render components default */}
-          {renderComponentTemplate(false)}
-          {/* Search Box HeroUI */}
-          {inputPlaceholder && (
-            <div className={cn("relative", inputWidth || "w-64")}>
-              <i className="fas fa-search text-slate-400 text-sm absolute left-3.5 top-1/2 -translate-y-1/2 z-10 pointer-events-none" />
-              <Input
-                type="text"
-                placeholder={inputPlaceholder}
-                value={inputSearch}
-                onChange={(e) => {
-                  setInputSearch(e.target.value);
-                  debouncedSearch(e.target.value);
-                }}
-                className={cn(
-                  "w-full h-8 text-sm font-medium pl-9 pr-8 transition-colors",
-                  softMode
-                    ? "rounded-xl bg-slate-50 border border-transparent hover:border-blue-200 focus:ring-2 focus:ring-blue-500/20 focus:border-transparent outline-none"
-                    : "rounded-xl bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-300 outline-none",
-                )}
-              />
-              {inputSearch && (
-                <button
-                  onClick={() => {
-                    setInputSearch("");
-                    debouncedSearch("");
-                  }}
-                  className="text-slate-400 hover:text-slate-600 absolute right-3 top-1/2 -translate-y-1/2 z-10 transition-colors"
-                >
-                  <i className="fas fa-times text-sm" />
-                </button>
-              )}
-            </div>
-          )}
-          {/* Action Buttons */}
-          <div className="flex gap-2">
-            <Button
-              isIconOnly
-              variant="flat"
+    <div className={className} onClick={onInteract}>
+      <div className="flex items-center justify-end gap-2 overflow-x-auto">
+        {renderComponentTemplate(false)}
+        {inputPlaceholder && (
+          <div className={inputWidth || "w-64"}>
+            <Input
+              type="text"
               size="sm"
-              onPress={() => setIsShowCustomizedFilter(!isShowCustomizedFilter)}
-              className={cn(
-                "rounded-md h-8 w-8 border-0 bg-transparent text-slate-500 hover:bg-slate-100 transition-colors",
-                isShowCustomizedFilter
-                  ? "text-blue-600 bg-blue-50"
-                  : "",
-              )}
-            >
-              <i className="fas fa-filter text-sm" />
-            </Button>
-
-            <Button
-              isIconOnly
-              variant="flat"
-              size="sm"
-              onPress={refresh}
-              className="rounded-md h-8 w-8 border-0 bg-transparent text-slate-500 hover:bg-slate-100 transition-colors"
-            >
-              <i className="fas fa-sync-alt text-sm" />
-            </Button>
+              variant="outline"
+              placeholder={inputPlaceholder}
+              value={inputSearch}
+              onChange={(e) => {
+                setInputSearch(e.target.value);
+                debouncedSearch(e.target.value);
+              }}
+              startContent={<i className="fas fa-search text-default-400" />}
+            />
           </div>
-        </div>
+        )}
+        <Button
+          isIconOnly
+          variant="outline"
+          size="sm"
+          onPress={() => setIsShowCustomizedFilter(!isShowCustomizedFilter)}
+          variant={isShowCustomizedFilter ? "primary" : "outline"}
+        >
+          <i className="fas fa-filter" />
+        </Button>
+        <Button isIconOnly variant="outline" size="sm" onPress={refresh}>
+          <i className="fas fa-sync-alt" />
+        </Button>
       </div>
 
       {/* Advanced Filters Panel */}
       {isShowCustomizedFilter && (
-        <div className="animate-fade-in">
-          <div className="flex flex-wrap gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200 justify-end">
-            {renderComponentTemplate(true)}
-          </div>
+        <div className="flex flex-wrap gap-2 pt-2 justify-end">
+          {renderComponentTemplate(true)}
         </div>
       )}
     </div>

@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { Button, Tooltip } from "@heroui/react";
+import { createPortal } from "react-dom";
+import { Button, Tooltip, Modal } from "@heroui/react";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import proxyService from "@/services/proxy/proxy.service";
 import CreateModal from "./CreateModal";
@@ -81,6 +82,16 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
     status: true,
   });
 
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    // Look for the portal target in the layout
+    const target = document.getElementById("admin-page-actions");
+    if (target) {
+      setPortalTarget(target);
+    }
+  }, []);
+
   useEffect(() => {
     if (data) setDataSource(data);
   }, [data]);
@@ -129,7 +140,7 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
       const res = await proxyService.multipleDeleteAPI(
         deleteBtn.api,
         ids,
-        deleteBtn.params,
+        deleteBtn.params || "ids",
       );
       if (res.status === 204) {
         removeCheckedItems(ids);
@@ -178,10 +189,10 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
 
       {deleteBtn &&
         deleteBtn?.active &&
-        deleteBtn.type === DELETE_TYPE_MULTI &&
+        (deleteBtn.type === DELETE_TYPE_MULTI || !deleteBtn.type) &&
         (!deleteBtn.permission || deleteBtn.permission in granted) && (
           <Button
-            className={(deleteBtn.className as string) || "btn-danger"}
+            variant="danger"
             isDisabled={!selected || selected.length <= 0}
             onPress={openDeleteModal}
           >
@@ -196,12 +207,7 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
             <Button
               key={idx}
               variant={
-                item.outlined ? "bordered" : item.text ? "light" : "solid"
-              }
-              className={
-                item.color
-                  ? `bg-${item.color}-600 text-white rounded-lg h-9 px-4 font-semibold`
-                  : "bg-blue-600 text-white rounded-lg h-9 px-4 font-semibold"
+                item.outlined ? "outline" : item.text ? "ghost" : "primary"
               }
               onPress={item.onClick as () => void}
             >
@@ -219,7 +225,7 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
         (!activeBtn.permission || activeBtn.permission in granted) && (
           <div className="flex gap-2">
             <Button
-              className="btn-warning"
+              variant="secondary"
               isDisabled={!selected || selected.length <= 0}
               onPress={() => setConfirmUpdate({ open: true, status: false })}
             >
@@ -227,7 +233,7 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
               Bỏ kích hoạt
             </Button>
             <Button
-              className="btn-primary"
+              variant="primary"
               isDisabled={!selected || selected.length <= 0}
               onPress={() => setConfirmUpdate({ open: true, status: true })}
             >
@@ -256,17 +262,14 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
           >
             <Button
               isDisabled={btnDisabled as boolean}
-              className={
-        
-                item.color === "warning"
-                  ? "btn-warning"
-                  : item.color === "success"
-                    ? "btn-success"
-                    : item.color === "primary"
-                      ? "btn-primary"
-                    : item.color === "danger"
-                      ? "btn-danger"
-                      : "btn-primary"
+              variant={
+                item.color === "danger"
+                  ? "danger"
+                  : item.color === "warning"
+                    ? "secondary"
+                    : item.color === "success"
+                      ? "primary"
+                      : "primary"
               }
               onPress={(e) => {
                 // Helper functions for customList buttons
@@ -306,50 +309,36 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
 
   if (createBtn?.hideToolsBar) return null;
 
-  return (
-    <div
-      className={`flex flex-wrap items-center gap-2 p-1 bg-white rounded-xl border border-slate-200 ${className || ""}`}
-    >
+  const content = (
+    <>
       {renderLeftToolbar()}
       {renderRightToolbar()}
 
-      {/* ── Delete Confirmation Overlay ── */}
-      {isDeleteOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center px-4"
-          style={{ background: "rgba(0,0,0,0.65)" }}
-        >
-          <div className="absolute inset-0" onClick={closeDeleteModal} />
-          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md p-6" style={{ zIndex: 1 }}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-orange-50 flex-shrink-0">
-                <i className="fas fa-exclamation-triangle text-lg text-orange-500" />
-              </div>
-              <h3 className="text-base font-semibold text-gray-900">Xác nhận xóa</h3>
-            </div>
-            <p className="text-gray-700 mb-6">
-              Bạn có chắc chắn muốn xóa{" "}
-              <b className="text-gray-900">{selected?.length}</b> bản ghi đã chọn?
-            </p>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => handleDeleteSelected(closeDeleteModal)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-white bg-red-600 hover:bg-red-700 transition-all font-medium"
-              >
-                <i className="fas fa-trash-alt" />
-                Xóa
-              </button>
-              <button
-                onClick={closeDeleteModal}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-all font-medium"
-              >
-                <i className="fas fa-times" />
-                Đóng
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal isOpen={isDeleteOpen} onOpenChange={(open) => !open && closeDeleteModal()}>
+        <Modal.Backdrop>
+          <Modal.Container placement="top">
+            <Modal.Dialog>
+              <Modal.CloseTrigger />
+              <Modal.Header>
+                <Modal.Heading>Xác nhận xóa</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <p>
+                  Bạn có chắc chắn muốn xóa {selected?.length} bản ghi đã chọn?
+                </p>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="outline" onPress={closeDeleteModal}>
+                  Đóng
+                </Button>
+                <Button variant="danger" onPress={() => handleDeleteSelected(closeDeleteModal)}>
+                  Xóa
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
+      </Modal>
 
       {activeBtn?.api && (
         <ActiveModal
@@ -367,6 +356,18 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
           setHasChangeData={setHasChangeData}
         />
       )}
+    </>
+  );
+
+  if (portalTarget) {
+    return createPortal(content, portalTarget);
+  }
+
+  return (
+    <div
+      className={`flex flex-wrap items-center gap-2 ${className || ""}`}
+    >
+      {content}
     </div>
   );
 };

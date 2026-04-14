@@ -214,60 +214,34 @@ body {
      ========================================= */
   
   /* Modern table with subtle shadows and gradients */
-  .datatable-wrapper table {
+  .datatable-wrapper .nested-table {
     @apply relative;
   }
 
-  .datatable-wrapper thead tr {
+  .datatable-wrapper .nested-table thead tr {
     @apply relative;
     background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
   }
 
-  .datatable-wrapper thead th {
+  .datatable-wrapper .nested-table thead th {
     @apply relative;
     font-weight: 600;
     text-transform: uppercase;
     font-size: 11px;
   }
 
-  .datatable-wrapper tbody tr {
+  .datatable-wrapper .nested-table tbody tr {
     @apply transition-all duration-200;
   }
 
-  .datatable-wrapper tbody tr:hover {
+  .datatable-wrapper .nested-table tbody tr:hover {
     @apply bg-gradient-to-r from-blue-50/50 to-indigo-50/50;
     box-shadow: 0 2px 8px rgba(15, 107, 191, 0.08);
     transform: translateY(-1px);
   }
 
-  /* Modern input styles with subtle borders */
-  input[type="text"],
-  input[type="email"],
-  input[type="password"],
-  input[type="number"],
-  input[type="tel"],
-  input[type="url"],
-  select,
-  textarea {
-    @apply transition-all duration-200;
-    border-width: 1px;
-    border-color: #e5e7eb;
-  }
-
-  input[type="text"]:focus,
-  input[type="email"]:focus,
-  input[type="password"]:focus,
-  input[type="number"]:focus,
-  input[type="tel"]:focus,
-  input[type="url"]:focus,
-  select:focus,
-  textarea:focus {
-    @apply border-[#0f6bbf] ring-1 ring-[#0f6bbf]/20;
-    outline: none;
-  }
-
   /* Custom checkbox accent color */
-  input[type="checkbox"] {
+  .datatable-wrapper .nested-table input[type="checkbox"] {
     @apply accent-[#0f6bbf] cursor-pointer;
   }
 

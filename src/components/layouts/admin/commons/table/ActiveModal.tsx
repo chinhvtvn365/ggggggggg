@@ -79,11 +79,11 @@ const ActiveModal: React.FC<ActiveModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <Modal.Backdrop className="bg-black/80 modal-backdrop">
-        <Modal.Container className="items-center justify-center modal-container" placement="top">
-          <Modal.Dialog className="bg-white rounded-xl max-w-md w-full shadow-2xl modal-dialog">
+      <Modal.Backdrop>
+        <Modal.Container placement="top">
+          <Modal.Dialog>
             <Modal.CloseTrigger />
-            <Modal.Header className="">
+            <Modal.Header>
               <div className="flex items-center gap-3">
                 <div className={`flex items-center justify-center w-12 h-12 rounded-full ${
                   status ? "bg-green-100" : "bg-orange-100"
@@ -92,27 +92,25 @@ const ActiveModal: React.FC<ActiveModalProps> = ({
                     status ? "text-green-600" : "text-orange-600"
                   }`} />
                 </div>
-                <Modal.Heading className="text-lg font-semibold text-gray-900">Xác nhận</Modal.Heading>
+                <Modal.Heading>Xác nhận</Modal.Heading>
               </div>
             </Modal.Header>
-            <Modal.Body className="px-6 py-5">
-              <p className="text-gray-700">
-                Bạn có chắc chắn muốn {status ? "kích hoạt" : "bỏ kích hoạt"} <b className="text-gray-900">{selectedIds.length}</b> bản ghi đã chọn?
+            <Modal.Body>
+              <p>
+                Bạn có chắc chắn muốn {status ? "kích hoạt" : "bỏ kích hoạt"} <b>{selectedIds.length}</b> bản ghi đã chọn?
               </p>
             </Modal.Body>
-            <Modal.Footer className="flex gap-2 justify-end px-6 py-3.5 bg-gray-50 border-t border-gray-200">
+            <Modal.Footer>
               <Button
-                color="default"
-                variant="bordered"
+                variant="outline"
                 onPress={onClose}
                 isDisabled={loading}
-                className="font-medium"
               >
                 <i className="pi pi-times mr-1" />
                 Hủy
               </Button>
               <Button
-                className="btn-primary font-medium"
+                variant="primary"
                 onPress={handleSubmit}
                 isLoading={loading}
                 isDisabled={loading}

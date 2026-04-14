@@ -3,10 +3,10 @@
 import React, { useEffect, useState } from "react";
 import moment from "moment";
 import Image from "next/image";
+import { Card } from "@heroui/react";
 import DataTable from "@/components/layouts/admin/commons/table/DataTable";
 import AddEditTinTucBaiViet from "@/components/tin-tuc-bai-viet/AddEditTinTucBaiViet";
 import proxyService from "@/services/proxy/proxy.service";
-import { DELETE_TYPE_MULTI } from "@/constants/datatable.enum";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -164,19 +164,21 @@ const Page = () => {
           dataField: "hinhAnh",
           width: "92px",
           alignItems: "center",
+          className: "sticky-col-img",
+          headerClassName: "sticky-col-img",
           dataFormat: (data: NewsItem) => {
             const imageSrc = getImageSource(data);
             return (
-              <div className="news-image-cell flex justify-content-center">
+              <div className="flex justify-center">
                 {imageSrc ? (
-                  <div className="relative h-10 w-16 overflow-hidden rounded-md border border-slate-100 bg-slate-100 shadow-inner">
+                  <div className="relative h-[48px] w-[72px] overflow-hidden rounded border border-[#CBD5E1] bg-white">
                     <Image
-                      width={64}
-                      height={40}
+                      width={72}
+                      height={48}
                       unoptimized
                       src={imageSrc}
-                      alt="Ảnh bài viết"
-                      className="h-10 w-16 object-cover"
+                      alt="Ảnh"
+                      className="h-full w-full object-cover"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = "none";
                         const next = (e.target as HTMLImageElement).nextSibling as HTMLElement | null;
@@ -187,13 +189,13 @@ const Page = () => {
                 ) : null}
                 <div
                   style={{
-                    height: "40px", width: "64px", backgroundColor: "#f1f5f9",
-                    borderRadius: "6px", display: imageSrc ? "none" : "flex",
+                    height: "48px", width: "72px", backgroundColor: "#F8FAFC",
+                    borderRadius: "4px", display: imageSrc ? "none" : "flex",
                     alignItems: "center", justifyContent: "center",
-                    fontSize: "11px", color: "#64748b", border: "1px solid #e2e8f0",
+                    border: "1px solid #CBD5E1",
                   }}
                 >
-                  <i className="pi pi-image" style={{ fontSize: "12px" }} />
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
                 </div>
               </div>
             );
@@ -204,16 +206,18 @@ const Page = () => {
         {
           name: "Tiêu đề",
           dataField: "tieuDe",
+          className: "sticky-col-title",
+          headerClassName: "sticky-col-title",
           dataFormatEdit: (row: NewsItem) => (
-            <div className="news-title-cell">
+            <div className="min-w-[200px]">
               <div
-                className="text-sm font-semibold text-slate-800 hover:text-blue-700 transition-colors line-clamp-2 cursor-pointer"
-                style={{ lineHeight: "1.35" } as React.CSSProperties}
+                className="text-sm font-medium text-[#111827] line-clamp-2"
+                style={{ lineHeight: "1.5" }}
               >
                 {row.tieuDe}
               </div>
               {row.duongDanThanThien && (
-                <div className="mt-0.5 max-w-[280px] text-[11px] text-slate-400 truncate font-mono">
+                <div className="mt-1 max-w-[280px] text-xs text-[#6B7280] truncate font-mono">
                   /{row.duongDanTopic}/{row.duongDanThanThien}
                 </div>
               )}
@@ -299,28 +303,26 @@ const Page = () => {
         {
           name: "Trạng thái",
           dataField: "isActive",
-          width: "100px",
+          width: "120px",
           dataFormat: (data: NewsItem) => (
-            <div className="status-badges flex flex-row flex-wrap gap-1">
-              <span className={data.isActive ? "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200" : "inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-500 border border-slate-200"}>
-                {data.isActive && <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />}
-                {data.isActive ? "Xuất bản" : "Ẩn"}
+            <div className="flex flex-col gap-1.5">
+              <span className={data.isActive
+                ? "inline-flex w-fit items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700"
+                : "inline-flex w-fit items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600"}>
+                {data.isActive ? "Đã xuất bản" : "Chờ xử lý"}
               </span>
-              {data.mucDoUuTien === 1 && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                  Ưu tiên
-                </span>
-              )}
-              {data.khanCap && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
-                  Khẩn cấp
-                </span>
-              )}
-              {data.thongBao && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-sky-50 text-sky-700 border border-sky-200 ml-1">
-                  Thông báo
-                </span>
-              )}
+              <div className="flex flex-row flex-wrap gap-1">
+                {data.mucDoUuTien === 1 && (
+                  <span className="inline-flex w-fit items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700">
+                    Ưu tiên
+                  </span>
+                )}
+                {data.khanCap && (
+                  <span className="inline-flex w-fit items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-red-50 text-red-600">
+                    Khẩn cấp
+                  </span>
+                )}
+              </div>
             </div>
           ),
         },
@@ -329,33 +331,31 @@ const Page = () => {
         {
           name: "Nguồn tin",
           dataField: "nguonTin",
+          width: "100px",
           dataFormat: (data: NewsItem) => {
-            if (!data.nguonTin) return <span style={{ color: "#ccc" }}>-</span>;
+            if (!data.nguonTin) return <span className="text-[#94A3B8]">-</span>;
             return (
               <a
                 href={String(data.nguonTin)}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-gray-400 text-[12px] font-medium hover:bg-blue-50 hover:text-blue-600 transition-all"
               >
-                <i className="pi pi-external-link" />
-                <span className="max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap">
-                  Xem
-                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"/><path d="m21 3-9 9"/><path d="M15 3h6v6"/></svg>
+                Xem
               </a>
             );
           },
         },
       ],
-      unifiedToolbar: true,
       tableStyles: {
         stripedRows: false,
         showGridlines: true,
-        verticalGridlines: false,
+        verticalGridlines: true,
         rowSpacing: "normal",
-        softActionIcons: true,
-        className: "news-editorial-table rounded-xl border border-slate-200/90 bg-white",
+        softActionIcons: false,
+        className: "bg-white w-full",
       },
     },
     filterTools: {
@@ -369,10 +369,9 @@ const Page = () => {
     crudButtons: {
       create: {
         active: true,
-        className: "inline-flex items-center gap-2 px-4 h-9 rounded-lg text-sm font-semibold text-white bg-emerald-500 hover:bg-emerald-600 shadow-md shadow-emerald-500/20 transition-all",
         permission: "NewsContent.Default.Create",
         api: "/api/app/tin-tuc-bai-viet",
-        uiConfigs: { headerText: "Thêm bài viết" },
+        uiConfigs: { headerText: "Thêm thông báo mới" },
         component: AddEditTinTucBaiViet,
         transform2BE: createDataForm,
         dataSource: { dsLinhVuc, dsChuDe, dsLoaiBanTin },
@@ -381,24 +380,25 @@ const Page = () => {
         active: true,
         permission: "NewsContent.Default.Update",
         api: "/api/app/tin-tuc-bai-viet",
-        uiConfigs: { headerText: "Cập nhật bài viết" },
+        uiConfigs: { headerText: "Cập nhật thông báo" },
         component: AddEditTinTucBaiViet,
         transform2BE: createDataForm,
         dataSource: { dsLinhVuc, dsChuDe, dsLoaiBanTin },
       },
       delete: {
         active: true,
-        className: "inline-flex items-center gap-2 px-4 h-9 rounded-lg text-sm font-semibold text-rose-600 bg-rose-50 hover:bg-rose-600 hover:text-white transition-all",
-        type: DELETE_TYPE_MULTI,
         api: "/api/app/tin-tuc-bai-viet",
-        params: "ids",
       },
     },
   };
 
   return (
-    <div className="news-editorial-page rounded-xl border border-slate-200/70 bg-white p-2.5 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
-      <DataTable metadata={metadata} rowClassNameCustom="news-feed-row" />
+    <div className="w-full p-3 lg:p-4">
+      <Card className="border border-default-200 overflow-hidden">
+        <div className="p-0 overflow-hidden">
+          <DataTable metadata={metadata} />
+        </div>
+      </Card>
     </div>
   );
 };

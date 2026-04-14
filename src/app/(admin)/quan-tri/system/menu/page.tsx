@@ -2,8 +2,8 @@
 
 import React, { Fragment, useEffect, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import { Card } from "@heroui/react";
 import DataTable from "@/components/layouts/admin/commons/table/DataTable";
-import { DELETE_TYPE_MULTI } from "@/constants/datatable.enum";
 import { proxyService } from "@/services";
 
 // Lazy load component
@@ -241,10 +241,13 @@ const Page = () => {
           ),
         },
       ],
-      stickyLeftColumns: 2,
       tableStyles: {
-        stripedRows: true,
+        stripedRows: false,
         showGridlines: true,
+        verticalGridlines: true,
+        rowSpacing: "normal",
+        softActionIcons: false,
+        className: "bg-white w-full",
       },
     },
     filterTools: {
@@ -302,9 +305,7 @@ const Page = () => {
       delete: {
         active: true,
         permission: "MenuManagement.Default.Delete",
-        type: DELETE_TYPE_MULTI,
         api: "/api/app/menu-management",
-        params: "ids",
       },
       customList: [
         {
@@ -355,18 +356,19 @@ const Page = () => {
   };
 
   return (
-    <Fragment>
+    <div className="w-full p-3 lg:p-4">
       {roles.length > 0 && (
         <FormProvider {...methods}>
-          <DataTable
-            metadata={metadata}
-            rowClassNameCustom={(rowData: any) =>
-              Number(rowData?.level || 0) === 0 ? "bg-blue-50/50" : ""
-            }
-          />
+          <Card className="border border-default-200 overflow-hidden">
+            <div className="p-0 overflow-hidden">
+              <DataTable
+                metadata={metadata}
+              />
+            </div>
+          </Card>
         </FormProvider>
       )}
-    </Fragment>
+    </div>
   );
 };
 

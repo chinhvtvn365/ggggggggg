@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Modal } from "@heroui/react";
+import { Modal, Button } from "@heroui/react";
 import { useForm, FormProvider, Controller } from "react-hook-form";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 
@@ -168,21 +168,21 @@ const UpdateModal: React.FC<UpdateModalProps> = (props) => {
   };
 
   return (
-    <Modal 
-      isOpen={isOpen} 
+    <Modal
+      isOpen={isOpen}
       onOpenChange={toggle}
     >
-      <Modal.Backdrop className="bg-black/80 modal-backdrop">
-        <Modal.Container className="items-center justify-start pt-16 modal-container" placement="top">
-          <Modal.Dialog className={`bg-white rounded-xl ${uiConfigs?.modalWidth || 'max-w-3xl'} w-full max-h-[88vh] flex flex-col shadow-2xl modal-dialog`}>
-            <Modal.CloseTrigger className="text-gray-400 hover:text-gray-600" />
-            <Modal.Header className="">
-              <Modal.Heading className="text-base font-semibold text-gray-900">
+      <Modal.Backdrop>
+        <Modal.Container placement="top">
+          <Modal.Dialog style={{ maxWidth: uiConfigs?.modalWidth || "960px", maxHeight: "88vh" }}>
+            <Modal.CloseTrigger />
+            <Modal.Header>
+              <Modal.Heading>
                 {uiConfigs?.headerText || "Cập nhật dữ liệu"}
               </Modal.Heading>
             </Modal.Header>
 
-            <Modal.Body className="p-3 max-h-[calc(94vh-140px)] overflow-y-auto compact-form">
+            <Modal.Body>
           <FormProvider {...extendedMethods}>
             <form id="update-modal-form" className={className} onSubmit={handleSubmit(onSubmit)}>
               {React.createElement(component, {
@@ -196,10 +196,10 @@ const UpdateModal: React.FC<UpdateModalProps> = (props) => {
           </FormProvider>
             </Modal.Body>
 
-            <Modal.Footer className="border-t border-gray-200 px-6 py-3.5 bg-gray-50 flex flex-wrap gap-2">
+            <Modal.Footer>
           {/* Custom Footer Logic */}
           {customFooter && (
-            <div className="mr-auto">
+            <div>
               {typeof customFooter === "function"
                 ? customFooter({ formData: watch(), onClose: toggle })
                 : customFooter}
@@ -240,54 +240,47 @@ const UpdateModal: React.FC<UpdateModalProps> = (props) => {
             }
             if (item.type === "button") {
               return (
-                <button
+                <Button
                   key={index}
                   type="button"
-                  onClick={item.onClick}
-                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded text-sm transition-colors ${
-                    item.outlined 
-                      ? 'border-2 border-current bg-transparent hover:bg-gray-50' 
-                      : item.text 
-                      ? 'bg-transparent hover:bg-gray-100' 
-                      : 'text-white'
-                  } ${
-                    item.color === 'danger' 
-                      ? 'text-red-600 bg-red-600' 
-                      : item.color === 'warning' 
-                      ? 'text-yellow-600 bg-yellow-600' 
-                      : item.color === 'success' 
-                      ? 'text-green-600 bg-green-600' 
-                      : 'text-blue-600 bg-blue-600'
-                  }`}
+                  variant={
+                    item.color === "danger"
+                      ? "danger"
+                      : item.outlined
+                        ? "outline"
+                        : item.text
+                          ? "ghost"
+                          : "primary"
+                  }
+                  onPress={item.onClick}
                 >
                   <i className={item.icon} />
                   {item.label}
-                </button>
+                </Button>
               );
             }
             return null;
           })}
 
-          <div className="flex gap-2 ml-auto">
-       
+          <div className="flex gap-2">
             {!data?.disabled && (
-              <button 
+              <Button
                 type="submit"
                 form="update-modal-form"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700 transition-all duration-200 font-medium border-none"
+                variant="primary"
               >
                 <i className="fas fa-save" />
                 Lưu
-              </button>
+              </Button>
             )}
-                 <button 
+            <Button
               type="button"
-              onClick={toggle}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-slate-600 hover:bg-slate-700 transition-all duration-200 font-medium border-none"
+              variant="outline"
+              onPress={toggle}
             >
               <i className="fas fa-times" />
               Đóng
-            </button>
+            </Button>
           </div>
             </Modal.Footer>
           </Modal.Dialog>
