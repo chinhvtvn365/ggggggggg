@@ -197,8 +197,9 @@ const FilterTools: React.FC<FilterToolsProps> = ({
           <div key={comp.name + idx} className={cn("", comp.width || "")}>
             <Dropdown>
               <Dropdown.Trigger>
-                <Button variant="outline" size="sm" endContent={<i className="fas fa-chevron-down" />}>
+                <Button variant="secondary" size="sm">
                   {selectedItem?.label || comp.placeholder || "-- Chọn --"}
+                  <i className="fas fa-chevron-down" />
                 </Button>
               </Dropdown.Trigger>
               <Dropdown.Popover placement="bottom start">
@@ -235,11 +236,7 @@ const FilterTools: React.FC<FilterToolsProps> = ({
           <div key={comp.name + idx} className="flex gap-2 items-center">
             <div>
               <DatePicker
-                label="Từ ngày"
-                labelPlacement="inside"
-                variant="outline"
-                size="sm"
-                showMonthAndYearPickers
+                aria-label="Từ ngày"
                 value={safeToHeroDate(filterValues?.[startDateFieldName])}
                 onChange={(val: any) => {
                   const updated = {
@@ -254,11 +251,7 @@ const FilterTools: React.FC<FilterToolsProps> = ({
             <span>-</span>
             <div>
               <DatePicker
-                label="Đến ngày"
-                labelPlacement="inside"
-                variant="outline"
-                size="sm"
-                showMonthAndYearPickers
+                aria-label="Đến ngày"
                 value={safeToHeroDate(filterValues?.[endDateFieldName])}
                 onChange={(val: any) => {
                   const updated = {
@@ -300,31 +293,30 @@ const FilterTools: React.FC<FilterToolsProps> = ({
       <div className="flex items-center justify-end gap-2 overflow-x-auto">
         {renderComponentTemplate(false)}
         {inputPlaceholder && (
-          <div className={inputWidth || "w-64"}>
+          <div className={cn("flex items-center gap-2", inputWidth || "w-64")}>
+            <i className="fas fa-search text-default-400" />
             <Input
               type="text"
-              size="sm"
-              variant="outline"
+              size={32}
+              variant="secondary"
               placeholder={inputPlaceholder}
               value={inputSearch}
               onChange={(e) => {
                 setInputSearch(e.target.value);
                 debouncedSearch(e.target.value);
               }}
-              startContent={<i className="fas fa-search text-default-400" />}
             />
           </div>
         )}
         <Button
           isIconOnly
-          variant="outline"
+          variant={isShowCustomizedFilter ? "primary" : "secondary"}
           size="sm"
           onPress={() => setIsShowCustomizedFilter(!isShowCustomizedFilter)}
-          variant={isShowCustomizedFilter ? "primary" : "outline"}
         >
           <i className="fas fa-filter" />
         </Button>
-        <Button isIconOnly variant="outline" size="sm" onPress={refresh}>
+        <Button isIconOnly variant="secondary" size="sm" onPress={refresh}>
           <i className="fas fa-sync-alt" />
         </Button>
       </div>

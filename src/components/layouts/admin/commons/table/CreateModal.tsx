@@ -209,7 +209,7 @@ const CreateModal: React.FC<CreateModalProps> = (props) => {
             }
           }}
           variant="primary"
-          className={className}
+          className={`${className ?? ""} bg-emerald-600 hover:!bg-emerald-700`}
         >
           <i className="fa-solid fa-plus mr-1" />
           {customLabel ?? "Thêm"}

@@ -393,7 +393,7 @@ const Page = () => {
   };
 
   return (
-    <div className="w-full p-3 lg:p-4">
+    <div className="">
       <Card className="border border-default-200 overflow-hidden">
         <div className="p-0 overflow-hidden">
           <DataTable metadata={metadata} />

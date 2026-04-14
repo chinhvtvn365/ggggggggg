@@ -1,5 +1,3 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-
 // Định nghĩa kiểu dữ liệu cho SnackBar
 export type SnackBarType = 'error' | 'success' | 'info' | 'warning';
 
@@ -18,7 +16,7 @@ interface SnackBarState {
   delay: number | null;
 }
 
-const initialState: SnackBarState = {
+export const snackBarInitialState: SnackBarState = {
   key: 0,
   isShow: false,
   message: '',
@@ -27,46 +25,74 @@ const initialState: SnackBarState = {
   delay: null
 };
 
-const snackBarSlice = createSlice({
-  name: 'snackBar',
-  initialState,
-  reducers: {
-    showError: (state, action: PayloadAction<SnackBarPayload>) => {
-      state.key++;
-      state.isShow = true;
-      state.message = action.payload.message;
-      state.title = action.payload.title || 'Lỗi';
-      state.snackBarType = 'error';
-      state.delay = action.payload.delay || 5000;
-    },
-    showSuccess: (state, action: PayloadAction<SnackBarPayload>) => {
-      state.key++;
-      state.isShow = true;
-      state.message = action.payload.message;
-      state.title = action.payload.title || 'Thành công';
-      state.snackBarType = 'success';
-      state.delay = action.payload.delay || 3000;
-    },
-    showInformation: (state, action: PayloadAction<SnackBarPayload>) => {
-      state.key++;
-      state.isShow = true;
-      state.message = action.payload.message;
-      state.title = action.payload.title || 'Thông báo';
-      state.snackBarType = 'info';
-      state.delay = action.payload.delay || 4000;
-    },
-    hide: (state) => {
-      state.isShow = false;
-    }
+const SHOW_ERROR = "snackBar/showError";
+const SHOW_SUCCESS = "snackBar/showSuccess";
+const SHOW_INFORMATION = "snackBar/showInformation";
+const HIDE = "snackBar/hide";
+
+export const showError = (payload: SnackBarPayload) => ({
+  type: SHOW_ERROR,
+  payload,
+} as const);
+export const showSuccess = (payload: SnackBarPayload) => ({
+  type: SHOW_SUCCESS,
+  payload,
+} as const);
+export const showInformation = (payload: SnackBarPayload) => ({
+  type: SHOW_INFORMATION,
+  payload,
+} as const);
+export const hide = () => ({ type: HIDE } as const);
+
+export type SnackBarAction =
+  | ReturnType<typeof showError>
+  | ReturnType<typeof showSuccess>
+  | ReturnType<typeof showInformation>
+  | ReturnType<typeof hide>;
+
+const snackBarReducer = (
+  state: SnackBarState = snackBarInitialState,
+  action: SnackBarAction | { type: string; payload?: SnackBarPayload },
+): SnackBarState => {
+  switch (action.type) {
+    case SHOW_ERROR:
+      return {
+        ...state,
+        key: state.key + 1,
+        isShow: true,
+        message: action.payload?.message || "",
+        title: action.payload?.title || "Lỗi",
+        snackBarType: "error",
+        delay: action.payload?.delay || 5000,
+      };
+    case SHOW_SUCCESS:
+      return {
+        ...state,
+        key: state.key + 1,
+        isShow: true,
+        message: action.payload?.message || "",
+        title: action.payload?.title || "Thành công",
+        snackBarType: "success",
+        delay: action.payload?.delay || 3000,
+      };
+    case SHOW_INFORMATION:
+      return {
+        ...state,
+        key: state.key + 1,
+        isShow: true,
+        message: action.payload?.message || "",
+        title: action.payload?.title || "Thông báo",
+        snackBarType: "info",
+        delay: action.payload?.delay || 4000,
+      };
+    case HIDE:
+      return {
+        ...state,
+        isShow: false,
+      };
+    default:
+      return state;
   }
-});
+};
 
-// Export các action với tên rõ ràng hơn
-export const { 
-  showError, 
-  showSuccess, 
-  showInformation, 
-  hide 
-} = snackBarSlice.actions;
-
-export default snackBarSlice.reducer;
+export default snackBarReducer;

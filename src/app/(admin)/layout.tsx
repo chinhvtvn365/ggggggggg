@@ -40,14 +40,13 @@ export default function AdminLayout({
       <div className="flex flex-col flex-1 overflow-hidden">
         <AdminHeader />
 
-        <main className="flex-1 overflow-y-auto w-full p-4 md:p-6">
-          <div className="flex items-center justify-between gap-3 mb-6">
+        <main className="flex-1 overflow-y-auto w-full px-3 py-3 md:px-5 md:py-4 lg:px-6 lg:py-5">
+          <div className="flex items-center justify-between gap-3">
             <div>
               {breadcrumbsData.length > 0 && (
                 <Breadcrumbs>
                   <Breadcrumbs.Item key="home" href="/quan-tri">
                     <span className="inline-flex items-center gap-1">
-                      <i className="fas fa-home text-xs" />
                       Trang chủ
                     </span>
                   </Breadcrumbs.Item>

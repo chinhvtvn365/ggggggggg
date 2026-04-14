@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { Button, Tooltip, Modal } from "@heroui/react";
+import { Button, Modal } from "@heroui/react";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import proxyService from "@/services/proxy/proxy.service";
 import CreateModal from "./CreateModal";
@@ -32,6 +32,10 @@ interface CrudButtonsProps {
   granted: Record<string, unknown>;
 }
 
+interface CustomActionHelpers {
+  openActiveModal: (status: boolean) => void;
+}
+
 const CrudButtons: React.FC<CrudButtonsProps> = ({
   metadata,
   data,
@@ -46,16 +50,7 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
   const datatableReducer = useAppSelector((state) => state.datatableReducer);
   const totalCount = datatableReducer.totalRows;
 
-  const metadata_data = metadata as {
-    crudButtons: {
-      create: Record<string, unknown>;
-      delete: Record<string, unknown>;
-      active: Record<string, unknown>;
-      customList: Record<string, unknown>[];
-      customLeftToolbarList: Record<string, unknown>[];
-    };
-    customFooter: React.ReactNode;
-  };
+  const metadata_data = metadata as any;
 
   const createBtn = metadata_data.crudButtons.create;
   const deleteBtn = metadata_data.crudButtons.delete;
@@ -100,8 +95,8 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
   const removeCheckedItems = (ids: string[]) => {
     dispatch(updateTotalRows(totalCount - ids.length));
 
-    const temp = data.filter((x) => !ids.includes(x.id));
-    const deletedItems = data.filter((x) => ids.includes(x.id));
+    const temp = data.filter((x) => !ids.includes(x.id as string));
+    const deletedItems = data.filter((x) => ids.includes(x.id as string));
 
     // Cập nhật lại số liệu thống kê (Tích cực/Tiêu cực/Trung lập)
     if (deletedItems.some((x) => x?.phanLoai)) {
@@ -135,12 +130,12 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
 
   const handleDeleteSelected = async (onClose: () => void) => {
     if (!selected) return;
-    const ids = selected.map((val) => val.id);
+    const ids = selected.map((val) => val.id as string);
     try {
       const res = await proxyService.multipleDeleteAPI(
-        deleteBtn.api,
+        deleteBtn.api as string,
         ids,
-        deleteBtn.params || "ids",
+        (deleteBtn.params as string) || "ids",
       );
       if (res.status === 204) {
         removeCheckedItems(ids);
@@ -164,7 +159,7 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
             className={createBtn.className}
             defaultValues={createBtn.defaultValues}
             dataSource={createBtn.dataSource}
-            style={metadata.crudButtons.create.style}
+            style={metadata_data.crudButtons.create.style}
             uiConfigs={createBtn.uiConfigs}
             component={createBtn.component}
             transform2BE={createBtn.transform2BE}
@@ -180,9 +175,9 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
               setBack(displayStratetry);
               setDataSource(displayStratetry);
               setHasChangeData(true);
-              if (createBtn.callback) createBtn.callback(newRow);
+              if (typeof createBtn.callback === "function") createBtn.callback(newRow);
             }}
-            customFooter={metadata.customFooter}
+            customFooter={metadata_data.customFooter as React.ReactNode}
             navigate={createBtn.navigate}
           />
         )}
@@ -255,11 +250,7 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
             (item.requiresSelection as boolean));
 
         return (
-          <Tooltip
-            key={idx}
-            content={(item.tooltip || item.label) as string}
-            placement="bottom"
-          >
+          <div key={idx} title={(item.tooltip || item.label) as string}>
             <Button
               isDisabled={btnDisabled as boolean}
               variant={
@@ -273,7 +264,7 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
               }
               onPress={(e) => {
                 // Helper functions for customList buttons
-                const helpers = {
+                const helpers: CustomActionHelpers = {
                   openActiveModal: (status: boolean) => {
                     if (!selected || selected.length === 0) return;
                     setActiveModal({ open: true, status });
@@ -283,7 +274,7 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
                 const onClick = item.onClick as (
                   e: any,
                   selected: Record<string, unknown>[] | null,
-                  helpers: typeof helpers,
+                  helpers: CustomActionHelpers,
                 ) => unknown;
                 const res = onClick(e, selected, helpers);
                 if (item.callback) {
@@ -296,12 +287,12 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
                 }
               }}
             >
-              {item.icon && <i className={item.icon as string} />}
-              {item.label && (
+              {Boolean(item.icon) && <i className={item.icon as string} />}
+              {Boolean(item.label) && (
                 <span className="">{item.label as string}</span>
               )}
             </Button>
-          </Tooltip>
+          </div>
         );
       })}
     </div>

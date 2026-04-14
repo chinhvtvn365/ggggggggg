@@ -9,12 +9,27 @@ import { proxyService } from "@/services";
 // Lazy load component
 const AddEdit = React.lazy(() => import("@/components/system/menu/AddEdit"));
 
+interface AssignableRole {
+  id: string;
+  name: string;
+}
+
+interface AssignableRolesResponse {
+  items: AssignableRole[];
+}
+
+interface SharedParameterResponse {
+  value?: string;
+}
+
+interface UpdateOrderResult {
+  id: string;
+  isSuccess: boolean;
+}
+
 const Page = () => {
   const methods = useForm();
   const dirtyRefs = useRef<any>(null);
-  const { control } = methods;
-
-  const dataTableRef = useRef<any>(null);
   
   // Các hằng số menu
   const postisionMenu = [
@@ -36,18 +51,13 @@ const Page = () => {
   const [rolesDropdown, setRolesDropDown] = useState<any[]>([]);
   const [functionMenu, setFunctionMenu] = useState([]);
 
-  useEffect(() => {
-    getAssignableRoles();
-    getMenuParam();
-  }, []);
-
   const getAssignableRoles = async () => {
     try {
-      const res = await proxyService.get("/api/identity/users/assignable-roles");
+      const res = await proxyService.get<AssignableRolesResponse>("/api/identity/users/assignable-roles");
       if (res.status === 200 && res.data) {
-        setRoles(res.data?.items);
+        setRoles(res.data.items || []);
         setRolesDropDown(
-          res.data?.items.map((item: any) => ({
+          (res.data.items || []).map((item: AssignableRole) => ({
             value: item.id,
             label: item.name,
           }))
@@ -60,7 +70,7 @@ const Page = () => {
 
   const getMenuParam = async () => {
     try {
-      const res = await proxyService.get("/api/app/shared-parameter/by-key?key=DisplayTypeMenu");
+      const res = await proxyService.get<SharedParameterResponse>("/api/app/shared-parameter/by-key?key=DisplayTypeMenu");
       if (res.status === 200 && res.data?.value) {
         setFunctionMenu(JSON.parse(res.data.value));
       }
@@ -68,6 +78,15 @@ const Page = () => {
       console.error("Lỗi lấy tham số menu:", error);
     }
   };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void getAssignableRoles();
+      void getMenuParam();
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const sortByGroupAndOrder = (dataBinding: any[]) => {
     const result: any[] = [];
@@ -109,7 +128,7 @@ const Page = () => {
     }
     const selectedRoles = data.roleIdsModal
       ? Object.entries(data.roleIdsModal)
-          .filter(([key, value]) => value === true)
+          .filter(([, value]) => value === true)
           .map(([key]) => key)
       : []
 
@@ -123,15 +142,15 @@ const Page = () => {
   const onSubmit = async (data: any) => {
     const updateRequest: any[] = [];
     if (dirtyRefs.current) {
-      for (let key in dirtyRefs.current) {
+      for (const key in dirtyRefs.current) {
         if (data[key] !== null) {
           updateRequest.push({ id: key, order: data[key] });
         }
       }
       if (updateRequest.length > 0) {
-        const res = await proxyService.put("/api/app/menu-management", updateRequest);
+        const res = await proxyService.put<UpdateOrderResult[]>("/api/app/menu-management", updateRequest);
         if (res.status === 200 && res.data) {
-          return res.data.filter((item: any) => item.isSuccess).map((item: any) => item.id);
+          return res.data.filter((item) => item.isSuccess).map((item) => item.id);
         }
       }
     }
@@ -283,7 +302,7 @@ const Page = () => {
         permission: "MenuManagement.Default.Create",
         uiConfigs: { 
           headerText: "Thêm menu",
-          modalWidth: "max-w-6xl"
+          modalWidth: ""
         },
         dataSource: { roles, postisionMenu, groupMenu, functionMenu },
         component: AddEdit,
@@ -295,7 +314,7 @@ const Page = () => {
         permission: "MenuManagement.Default.Update",
         uiConfigs: { 
           headerText: "Cập nhật menu",
-          modalWidth: "max-w-6xl"
+          modalWidth: ""
         },
         dataSource: { roles, postisionMenu, groupMenu, functionMenu },
         component: AddEdit,
@@ -314,7 +333,9 @@ const Page = () => {
           icon: "fa-solid fa-xmark",
           permission: "MenuManagement.Default.Update",
           requiresSelection: true,
-          onClick: (_e: any, selected: any[], helpers: any) => {
+          onClick: (_e: any, _selected: any[], helpers: any) => {
+            void _e;
+            void _selected;
             helpers.openActiveModal(false);
           },
         },
@@ -324,7 +345,9 @@ const Page = () => {
           icon: "fa-solid fa-check",
           permission: "MenuManagement.Default.Update",
           requiresSelection: true,
-          onClick: (_e: any, selected: any[], helpers: any) => {
+          onClick: (_e: any, _selected: any[], helpers: any) => {
+            void _e;
+            void _selected;
             helpers.openActiveModal(true);
           },
         },
@@ -335,9 +358,14 @@ const Page = () => {
           permission: "MenuManagement.Default.Update",
           requiresSelection: false,
           onClick: (_e: any) => {
+            void _e;
             return onSubmit(methods.getValues());
           },
-          callback: async (res: any, data: any[], setBack: Function) => {
+          callback: async (
+            res: Promise<string[]> | string[],
+            data: any[],
+            setBack: (data: any[]) => void,
+          ) => {
             if (dirtyRefs.current) {
               const successIds = await res;
               const newData = data.map((item) => {
@@ -356,7 +384,7 @@ const Page = () => {
   };
 
   return (
-    <div className="w-full p-3 lg:p-4">
+    <div className="">
       {roles.length > 0 && (
         <FormProvider {...methods}>
           <Card className="border border-default-200 overflow-hidden">

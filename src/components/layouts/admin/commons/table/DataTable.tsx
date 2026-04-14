@@ -9,7 +9,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from "react";
-import { Button, Modal, Chip, Table } from "@heroui/react";
+import { Button, Modal, Chip, Table, Pagination } from "@heroui/react";
 import { useFormContext } from "react-hook-form";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 
@@ -195,7 +195,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
     const methods = useFormContext();
 
     // ─── DESTRUCTURE metadata.table ─────────────────────────────────────────────
-    const tableConfig = metadata.table as TableConfig;
+    const tableConfig = (metadata as any).table as TableConfig;
     const {
       pagination,
       columns,
@@ -207,9 +207,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
       headerColumnGroup,
     } = tableConfig;
 
-    const crudButtons = (
-      metadata as { crudButtons: Record<string, Record<string, unknown>> }
-    ).crudButtons;
+    const crudButtons = (metadata as any).crudButtons as any;
 
     // ─── STATE ──────────────────────────────────────────────────────────────────
     const [, setHasChangeData] = useState(false);
@@ -253,9 +251,13 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
       return nested != null && nested.length > 0;
     };
 
+    const isMultiDeleteType =
+      !crudButtons.delete?.type ||
+      crudButtons.delete.type === DELETE_TYPE_MULTI;
+
     const getDeletePermission = (): boolean =>
       Boolean(crudButtons.delete.active) &&
-      crudButtons.delete.type === DELETE_TYPE_MULTI &&
+      isMultiDeleteType &&
       (!crudButtons.delete.permission ||
         (crudButtons.delete.permission as string) in granted);
 
@@ -369,6 +371,29 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
             : {}),
         },
       };
+    };
+
+    const resolveTotalRows = (
+      source: Record<string, unknown>,
+      fallbackLength: number,
+    ): number => {
+      const keys = [
+        "totalCount",
+        "totalRows",
+        "total",
+        "count",
+        "TotalCount",
+        "TotalRows",
+      ] as const;
+
+      for (const key of keys) {
+        const raw = source[key];
+        if (typeof raw === "number" && Number.isFinite(raw) && raw >= 0) {
+          return raw;
+        }
+      }
+
+      return fallbackLength;
     };
 
     // ─── REF METHODS ────────────────────────────────────────────────────────────
@@ -589,12 +614,16 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                 totalCount: number;
                 [key: string]: unknown;
               };
-              dispatch(updateTotalRows(resData.totalCount));
+              const total = resolveTotalRows(
+                resData,
+                (resData.items ?? []).length,
+              );
+              dispatch(updateTotalRows(total));
               const transformed = serverSide.transformStrategy
                 ? serverSide.transformStrategy(resData.items ?? [])
                 : (resData.items ?? []);
               setDataBinding(transformed);
-              setTotalRecord(resData.totalCount);
+              setTotalRecord(total);
 
               const additionalFields = Object.entries(resData).filter(
                 ([key, value]) =>
@@ -631,6 +660,8 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
       } else {
         const transformed = serverSide.transformStrategy();
         setDataBinding(transformed || []);
+        dispatch(updateTotalRows((transformed || []).length));
+        setTotalRecord((transformed || []).length);
       }
     }, [
       data,
@@ -679,7 +710,11 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                   totalCount: number;
                   [key: string]: unknown;
                 };
-                dispatch(updateTotalRows(resData.totalCount));
+                const total = resolveTotalRows(
+                  resData,
+                  (resData.items ?? []).length,
+                );
+                dispatch(updateTotalRows(total));
                 const transformed = serverSide.transformStrategy
                   ? serverSide.transformStrategy(resData.items ?? [])
                   : (resData.items ?? []);
@@ -715,7 +750,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                 }
 
                 setDataBinding(transformed);
-                setTotalRecord(resData.totalCount);
+                setTotalRecord(total);
               }
             })
             .catch(() => {});
@@ -750,14 +785,19 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
     // ─── SELECTION ──────────────────────────────────────────────────────────────
 
     const onSelectionChange = (value: Record<string, unknown>[]) => {
-      if (
-        getDeletePermission() &&
-        value &&
-        value.every((item) => item.disabled === undefined || !item.disabled)
-      ) {
-        setSelected(value);
-        dispatch(onSelectMultipleRows(value));
-      }
+      if (!getDeletePermission()) return;
+
+      const filtered = (value || []).filter(
+        (item) => item.disabled === undefined || !item.disabled,
+      );
+
+      // De-duplicate by id to avoid duplicated selection from nested/group rows.
+      const uniqueById = Array.from(
+        new Map(filtered.map((item) => [item.id as string, item])).values(),
+      );
+
+      setSelected(uniqueById);
+      dispatch(onSelectMultipleRows(uniqueById));
     };
 
     const toggleRowSelection = (
@@ -845,7 +885,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                 : (datatableReducer.totalRows ?? 0),
             )}
           <div
-            className={`flex flex-wrap items-center justify-between gap-3 ${
+            className={`flex flex-wrap items-center justify-between gap-3 mb-3 ${
               filterToolsCfg?.smallMode ? "p-2" : ""
             }`}
           >
@@ -919,7 +959,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
             <thead className="text-xs  bg-gray-50">
               <tr>
                 {crudButtons.delete.active &&
-                  crudButtons.delete.type === DELETE_TYPE_MULTI &&
+                  isMultiDeleteType &&
                   rowExpansion.isDeletable &&
                   (!crudButtons.delete.permission ||
                     (crudButtons.delete.permission as string) in granted) && (
@@ -939,9 +979,9 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                         onChange={(e) => {
                           const _sel = [...(selected || [])];
                           if (e.target.checked) {
-                            setSelected([..._sel, ...nestedRows]);
+                            onSelectionChange([..._sel, ...nestedRows]);
                           } else {
-                            setSelected(
+                            onSelectionChange(
                               _sel.filter(
                                 (sel) =>
                                   !nestedRows.some(
@@ -959,7 +999,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                 {rowExpansion.columns.map((col) => (
                   <th
                     key={col.name}
-                    className="px-4 py-2 text-left font-semibold text-gray-600"
+                    className="px-4 py-2 text-left text-[14px] font-bold text-slate-700"
                     style={col.style}
                   >
                     {col.name}
@@ -974,7 +1014,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                   className="border-b hover:bg-gray-50"
                 >
                   {crudButtons.delete.active &&
-                    crudButtons.delete.type === DELETE_TYPE_MULTI &&
+                    isMultiDeleteType &&
                     rowExpansion.isDeletable &&
                     (!crudButtons.delete.permission ||
                       (crudButtons.delete.permission as string) in granted) && (
@@ -1056,7 +1096,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
         <div className="flex items-center gap-2 p-1">
           {showGroupCount && (
             <Chip
-              variant="flat"
+              variant="soft"
               color="default"
               size="sm"
               className="font-bold ml-4"
@@ -1070,12 +1110,14 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
           {showGroupCount && (
             <Chip
               size="sm"
-              color="primary"
-              variant="shadow"
-              startContent={<i className="fas fa-circle text-[6px] ml-1" />}
+              color="success"
+              variant="primary"
               className="font-semibold"
             >
-              Tổng: {formatNumberWithDots(calculateGroupNumber(groupRowsBy, groupValue[groupRowsBy]))}
+              <span className="inline-flex items-center gap-1">
+                <i className="fas fa-circle text-[6px]" />
+                Tổng: {formatNumberWithDots(calculateGroupNumber(groupRowsBy, groupValue[groupRowsBy]))}
+              </span>
             </Chip>
           )}
         </div>
@@ -1099,7 +1141,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
       let count = columns.length;
       if (
         crudButtons.delete.active &&
-        crudButtons.delete.type === DELETE_TYPE_MULTI &&
+        isMultiDeleteType &&
         (!crudButtons.delete.permission ||
           (crudButtons.delete.permission as string) in granted)
       )
@@ -1142,12 +1184,9 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
           );
         }
 
-        const stripedClass =
-          tableStyles?.stripedRows && rowIndex % 2 === 1
-            ? "bg-slate-100/70"
-            : "bg-white";
+        const stripedClass = rowIndex % 2 === 0 ? "bg-slate-50/35" : "bg-white";
         const rowCls = `group ${getRowClassName(item)}`;
-        const cellBgClass = `${stripedClass} group-hover:!bg-slate-100/80`;
+        const cellBgClass = `${stripedClass} group-hover:!bg-sky-50/55`;
 
         rows.push(
           <Table.Row key={(item.id as string) || rowIndex} className={rowCls}>
@@ -1252,7 +1291,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                   !readOnly ? (
                     <a
                       href="#"
-                      className="inline-flex items-center h-7 px-2 rounded-md text-sm text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors font-medium"
+                      className="inline-flex items-center h-7 px-2 rounded-md text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/60 transition-colors font-medium"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -1447,8 +1486,8 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
         {columns.map((col, colIdx) => (
           <Table.Column
             key={col.name}
-            className={`sticky top-0 z-20 px-2 py-3 text-sm ${hasVerticalGridlines ? "border-r" : ""} ${
-              getStickyStyles(getDataColumnPhysicalIndex(colIdx), true, "bg-white")
+            className={`sticky top-0 z-20 px-2 py-3 text-[14px] font-bold text-slate-800 whitespace-nowrap ${hasVerticalGridlines ? "border-r" : ""} ${
+              getStickyStyles(getDataColumnPhysicalIndex(colIdx), true, "bg-slate-50")
                 .className
             } ${
               col.alignHeader === "center"
@@ -1462,7 +1501,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
               ...getStickyStyles(
                 getDataColumnPhysicalIndex(colIdx),
                 true,
-                "bg-white",
+                "bg-slate-50",
               ).style,
               ...col.style,
             }}
@@ -1499,20 +1538,27 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
     const totalRows = isPageMultipleTable
       ? totalRecord
       : (datatableReducer.totalRows ?? 0);
+    const effectiveTotalRows = totalRows > 0 ? totalRows : dataBinding.length;
     const totalPages =
-      pagination && pageRows > 0 ? Math.ceil(totalRows / pageRows) : 0;
+      pagination && pageRows > 0 ? Math.ceil(effectiveTotalRows / pageRows) : 0;
     const currentPage = lazyState.page + 1;
 
     const renderPagination = () => {
-      if (!pagination || totalPages <= 0) return null;
+      if (!pagination) return null;
+
+      const safeTotalPages = Math.max(totalPages, 1);
+      const safeCurrentPage = Math.min(
+        Math.max(currentPage, 1),
+        safeTotalPages,
+      );
 
       const pageNumbers = Array.from(
-        { length: totalPages },
+        { length: safeTotalPages },
         (_, i) => i + 1,
       ).filter((page) => {
-        if (totalPages <= 7) return true;
-        if (page === 1 || page === totalPages) return true;
-        if (Math.abs(page - currentPage) <= 1) return true;
+        if (safeTotalPages <= 7) return true;
+        if (page === 1 || page === safeTotalPages) return true;
+        if (Math.abs(page - safeCurrentPage) <= 1) return true;
         return false;
       });
 
@@ -1521,8 +1567,8 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
           <div className="flex items-center gap-2 text-sm">
             <span>
               Từ {(currentPage - 1) * pageRows + 1} đến{" "}
-              {Math.min(currentPage * pageRows, totalRows)} trên tổng số{" "}
-              {formatNumberWithDots(totalRows)}
+              {Math.min(currentPage * pageRows, effectiveTotalRows)} trên tổng số{" "}
+              {formatNumberWithDots(effectiveTotalRows)}
             </span>
             <select
               className="px-2 py-1"
@@ -1536,67 +1582,65 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
               ))}
             </select>
           </div>
-          <div className="flex items-center gap-1.5">
-            <Button
-              size="sm"
-              variant="outline"
-              onPress={() => onPage(0, 0, pageRows)}
-              isDisabled={currentPage === 1}
-            >
-              «
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onPress={() =>
-                onPage((currentPage - 2) * pageRows, currentPage - 2, pageRows)
-              }
-              isDisabled={currentPage === 1}
-            >
-              ‹
-            </Button>
-            {pageNumbers.map((page, index, array) => {
-              const prevPage = array[index - 1];
-              const showEllipsis =
-                prevPage !== undefined && page - prevPage > 1;
-              return (
-                <Fragment key={page}>
-                  {showEllipsis && (
-                    <span className="px-2 text-slate-400 font-bold">...</span>
-                  )}
-                  <Button
-                    size="sm"
-                    variant={currentPage === page ? "primary" : "outline"}
-                    onPress={() =>
-                      onPage((page - 1) * pageRows, page - 1, pageRows)
-                    }
-                  >
-                    {page}
-                  </Button>
-                </Fragment>
-              );
-            })}
-            <Button
-              size="sm"
-              variant="outline"
-              onPress={() =>
-                onPage(currentPage * pageRows, currentPage, pageRows)
-              }
-              isDisabled={currentPage === totalPages}
-            >
-              ›
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onPress={() =>
-                onPage((totalPages - 1) * pageRows, totalPages - 1, pageRows)
-              }
-              isDisabled={currentPage === totalPages}
-            >
-              »
-            </Button>
-          </div>
+          <Pagination size="sm" className="ml-auto">
+            <Pagination.Content>
+              <Pagination.Item>
+                <Pagination.Previous
+                  isDisabled={safeCurrentPage === 1}
+                  onPress={() =>
+                    onPage(
+                      (safeCurrentPage - 2) * pageRows,
+                      safeCurrentPage - 2,
+                      pageRows,
+                    )
+                  }
+                >
+                  <Pagination.PreviousIcon />
+                </Pagination.Previous>
+              </Pagination.Item>
+
+              {pageNumbers.map((page, index, array) => {
+                const prevPage = array[index - 1];
+                const showEllipsis =
+                  prevPage !== undefined && page - prevPage > 1;
+
+                return (
+                  <Fragment key={page}>
+                    {showEllipsis && (
+                      <Pagination.Item>
+                        <Pagination.Ellipsis />
+                      </Pagination.Item>
+                    )}
+                    <Pagination.Item>
+                      <Pagination.Link
+                        isActive={safeCurrentPage === page}
+                        onPress={() =>
+                          onPage((page - 1) * pageRows, page - 1, pageRows)
+                        }
+                      >
+                        {page}
+                      </Pagination.Link>
+                    </Pagination.Item>
+                  </Fragment>
+                );
+              })}
+
+              <Pagination.Item>
+                <Pagination.Next
+                  isDisabled={safeCurrentPage === safeTotalPages}
+                  onPress={() =>
+                    onPage(
+                      safeCurrentPage * pageRows,
+                      safeCurrentPage,
+                      pageRows,
+                    )
+                  }
+                >
+                  <Pagination.NextIcon />
+                </Pagination.Next>
+              </Pagination.Item>
+            </Pagination.Content>
+          </Pagination>
         </div>
       );
     };

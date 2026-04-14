@@ -101,6 +101,11 @@ const yyyymmddFormatTimeString = (str: string | Date | null | undefined): string
   return [dd > 9 ? dd : `0${dd}`, mm > 9 ? mm : `0${mm}`, yyyy].join("/");
 };
 
+const formattedDateValue = (str: string | Date | null | undefined): string => {
+  if (!str) return "";
+  return moment(str).format("YYYY-MM-DD");
+};
+
 const numberWithCommas = (x: number | string): string => {
   return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 };
@@ -279,6 +284,7 @@ const utilsService = {
   setUserInfo,
   fetchDanhMuc,
   yyyymmddFormatTimeString,
+  formattedDateValue,
   numberWithCommas,
   numberWithDots,
   getVerificationStatusInBlockchain,

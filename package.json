@@ -16,7 +16,6 @@
     "@heroui/styles": "^3.0.2",
     "@heroui/system": "^2.4.28",
     "@react-google-maps/api": "^2.20.8",
-    "@reduxjs/toolkit": "^2.11.2",
     "axios": "^1.13.6",
     "crypto-js": "^4.2.0",
     "env-cmd": "^11.0.0",
@@ -26,10 +25,10 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-hook-form": "^7.71.2",
-    "react-redux": "^9.2.0",
     "sass": "^1.97.3",
     "use-debounce": "^10.1.0",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

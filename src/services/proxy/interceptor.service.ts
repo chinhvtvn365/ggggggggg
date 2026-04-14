@@ -1,5 +1,5 @@
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axios";
-import { AppStore } from "@/lib/store";
+import { appStore } from "@/lib/store";
 import { tokenService } from "../auth/token.service";
 import { open, close } from "@/lib/features/loading/loadingSlice";
 import { showError, showSuccess } from "@/lib/features/snackbar/snackBarSlice";
@@ -15,6 +15,10 @@ interface ErrorResponse {
       members: string[];
     }>;
   };
+}
+
+interface RequestWithLoadingMeta extends InternalAxiosRequestConfig {
+  _showLoading?: boolean;
 }
 
 const excludeUrl = [
@@ -57,7 +61,7 @@ const fileUploadUrls = [
 
 let isInterceptorSetup = false;
 
-export const setupInterceptors = (store: AppStore): void => {
+export const setupInterceptors = (): void => {
   // Chỉ setup 1 lần duy nhất
   if (isInterceptorSetup) {
     return;
@@ -72,7 +76,7 @@ export const setupInterceptors = (store: AppStore): void => {
     if (closeTimeout) clearTimeout(closeTimeout);
     closeTimeout = setTimeout(() => {
       if (requestCounter === 0) {
-        store.dispatch(close());
+        appStore.dispatch(close());
       }
     }, 300);
   };
@@ -80,11 +84,13 @@ export const setupInterceptors = (store: AppStore): void => {
   // --- REQUEST INTERCEPTOR ---
   axios.interceptors.request.use(
     (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
+      const requestConfig = config as RequestWithLoadingMeta;
       const isIgnored = ignoreLoadingUrls.some((path) => config.url?.includes(path));
-      
-      if (!isIgnored) {
+      requestConfig._showLoading = !isIgnored;
+
+      if (requestConfig._showLoading) {
         requestCounter++;
-        store.dispatch(open());
+        appStore.dispatch(open());
       }
 
       // Gắn Token
@@ -104,8 +110,11 @@ export const setupInterceptors = (store: AppStore): void => {
       return config;
     },
     (error: AxiosError): Promise<never> => {
-      requestCounter--;
-      maybeCloseLoading();
+      const requestConfig = error.config as RequestWithLoadingMeta | undefined;
+      if (requestConfig?._showLoading) {
+        if (requestCounter > 0) requestCounter--;
+        maybeCloseLoading();
+      }
       return Promise.reject(error);
     }
   );
@@ -113,8 +122,11 @@ export const setupInterceptors = (store: AppStore): void => {
   // --- RESPONSE INTERCEPTOR ---
   axios.interceptors.response.use(
     (response: AxiosResponse): AxiosResponse => {
-      if (requestCounter > 0) requestCounter--;
-      if (requestCounter === 0) maybeCloseLoading();
+      const requestConfig = response.config as RequestWithLoadingMeta;
+      if (requestConfig._showLoading) {
+        if (requestCounter > 0) requestCounter--;
+        if (requestCounter === 0) maybeCloseLoading();
+      }
 
       const url = response.config.url || "";
       const baseUrl = process.env.NEXT_PUBLIC_BASEURL || "";
@@ -128,22 +140,25 @@ export const setupInterceptors = (store: AppStore): void => {
       if (!isExactIgnored && !isPartialIgnored) {
         const method = response.config.method?.toLowerCase();
         if (method === "put") {
-          store.dispatch(showSuccess({ message: "Cập nhật thành công" }));
+          appStore.dispatch(showSuccess({ message: "Cập nhật thành công" }));
         } else if (method === "post") {
-          store.dispatch(showSuccess({ message: "Thêm mới thành công" }));
+          appStore.dispatch(showSuccess({ message: "Thêm mới thành công" }));
         } else if (method === "delete") {
-          store.dispatch(showSuccess({ message: "Xóa thành công" }));
+          appStore.dispatch(showSuccess({ message: "Xóa thành công" }));
         }
       }
 
       return response;
     },
     (error: AxiosError<ErrorResponse>): Promise<never> => {
-      requestCounter--;
-      maybeCloseLoading();
+      const requestConfig = error.config as RequestWithLoadingMeta | undefined;
+      if (requestConfig?._showLoading) {
+        if (requestCounter > 0) requestCounter--;
+        maybeCloseLoading();
+      }
 
       if (!error.response) {
-        store.dispatch(showError({ message: error.message || "Lỗi kết nối mạng" }));
+        appStore.dispatch(showError({ message: error.message || "Lỗi kết nối mạng" }));
         return Promise.reject(error);
       }
 
@@ -162,7 +177,7 @@ export const setupInterceptors = (store: AppStore): void => {
           } else if (errorData?.message) {
             msg = errorData.message;
           }
-          store.dispatch(showError({ message: msg, title: "Lỗi 400" }));
+          appStore.dispatch(showError({ message: msg, title: "Lỗi 400" }));
           break;
         }
         case 401:
@@ -172,16 +187,16 @@ export const setupInterceptors = (store: AppStore): void => {
           }
           break;
         case 403:
-          store.dispatch(showError({ message: "Bạn không có quyền thực hiện thao tác này" }));
+          appStore.dispatch(showError({ message: "Bạn không có quyền thực hiện thao tác này" }));
           break;
         case 404:
-          store.dispatch(showError({ message: "Không tìm thấy tài nguyên (404)" }));
+          appStore.dispatch(showError({ message: "Không tìm thấy tài nguyên (404)" }));
           break;
         case 500:
-          store.dispatch(showError({ message: "Lỗi hệ thống máy chủ (500)" }));
+          appStore.dispatch(showError({ message: "Lỗi hệ thống máy chủ (500)" }));
           break;
         default:
-          store.dispatch(showError({ message: "Đã có lỗi xảy ra, vui lòng thử lại" }));
+          appStore.dispatch(showError({ message: "Đã có lỗi xảy ra, vui lòng thử lại" }));
           break;
       }
 

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Dropdown, Button, Avatar } from "@heroui/react";
+import { Dropdown, Button } from "@heroui/react";
 import Image from "next/image";
 
 import cacheService from "@/services/cache.service";
@@ -82,32 +82,34 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
   };
 
   return (
-    <header className="h-16 border-b flex items-center justify-between px-8 sticky top-0 z-30">
+    <header className="h-16 border-b border-slate-200/80 bg-white/85 backdrop-blur-md flex items-center justify-between px-4 md:px-6 lg:px-8 sticky top-0 z-30 shadow-[0_6px_20px_rgba(15,23,42,0.06)]">
       {/* Left Section */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-3 md:gap-5 min-w-0">
         {onMenuToggle && (
           <Button
             isIconOnly
-            variant="ghost"
+            size="sm"
+            variant="outline"
             onPress={onMenuToggle}
             aria-label="Toggle menu"
+            className="border-slate-300/80 bg-white/70"
           >
             <i className="fas fa-bars text-lg" />
           </Button>
         )}
 
-        <Link href="/quan-tri" className="hidden sm:flex items-center gap-4">
-          <div className="relative w-11 h-11 flex items-center justify-center">
+        <Link href="/quan-tri" className="flex items-center gap-3 md:gap-4 min-w-0">
+          <div className="relative w-10 h-10 md:w-11 md:h-11 flex items-center justify-center shrink-0">
             <Image
               src="/layout/images/logo.png"
               height={44}
               width={44}
               alt="Logo"
-              className="object-contain"
+              className="object-contain w-auto h-auto"
             />
           </div>
-          <div className="flex flex-col">
-            <span className="text-[19px] font-bold uppercase tracking-tight leading-loose whitespace-nowrap">
+          <div className="flex flex-col min-w-0 text-center">
+            <span className="text-base md:text-[22px] font-bold uppercase tracking-tight leading-[1.5] whitespace-nowrap text-slate-800 text-center">
               Chính quyền điện tử
             </span>
           </div>
@@ -115,14 +117,12 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
       </div>
 
       {/* Right Section */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-3">
         <Button
-          as={Link}
-          href="/"
-          target="_blank"
           size="sm"
           variant="outline"
-          className="hidden md:flex"
+          className="hidden md:flex border-slate-300/80 bg-white/70"
+          onPress={() => window.open("/", "_blank")}
         >
           <i className="fas fa-home text-sm" />
           <span>Trang chủ</span>
@@ -130,12 +130,14 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
 
         <Dropdown>
           <Dropdown.Trigger>
-            <Button variant="ghost" size="sm">
-              <span className="text-xs font-bold hidden lg:block">
+            <Button variant="outline" size="sm" className="border-slate-300/80 bg-white/70 px-2.5">
+              <span className="text-xs font-semibold hidden lg:block text-slate-700">
                 {userInfo?.firstName || "Quản trị viên"}
               </span>
-              <Avatar src="/layout/images/avatar-default.png" size="sm" />
-              <i className="fas fa-chevron-down text-[10px]" />
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-600">
+                <i className="fas fa-user text-xs" />
+              </span>
+              <i className="fas fa-chevron-down text-[10px] text-slate-500" />
             </Button>
           </Dropdown.Trigger>
 
@@ -152,8 +154,8 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
             >
               <Dropdown.Item id="profile" textValue="Thông tin cá nhân">
                 <div className="flex items-center gap-2">
-                  <i className="fas fa-user-circle" />
-                  <span>Thông tin cá nhân</span>
+                  <i className="fas fa-user-circle text-base" />
+                  <span className="text-sm font-medium">Thông tin cá nhân</span>
                 </div>
               </Dropdown.Item>
 
@@ -166,13 +168,10 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
                 </Dropdown.Item>
               )}
 
-              <Dropdown.Item
-                id="logout"
-                textValue="Đăng xuất"
-              >
-                <div className="flex items-center gap-2">
+              <Dropdown.Item id="logout" textValue="Đăng xuất" className="text-red-600">
+                <div className="flex items-center gap-2 text-red-600">
                   <i className="fas fa-sign-out-alt" />
-                  <span>Đăng xuất</span>
+                  <span className="font-medium">Đăng xuất</span>
                 </div>
               </Dropdown.Item>
             </Dropdown.Menu>

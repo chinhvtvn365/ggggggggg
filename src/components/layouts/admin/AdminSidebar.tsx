@@ -2,8 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
 import proxyService from "@/services/proxy/proxy.service";
 import AdminMenu from "@/components/layouts/admin/AdminMenu";
 import { MenuItem } from "@/types/menu";
