@@ -211,7 +211,7 @@ const CreateModal: React.FC<CreateModalProps> = (props) => {
           variant="primary"
           className={className}
         >
-          <i className="fa-solid fa-plus" />
+          <i className="fa-solid fa-plus mr-1" />
           {customLabel ?? "Thêm"}
         </Button>
       )}

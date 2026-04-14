@@ -496,11 +496,42 @@ body {
   }
 
   .btn-success {
-    background: var(--admin-success);
+    background: #10b981;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.30);
   }
 
   .btn-success:hover:not(:disabled) {
-    background: #047857;
+    background: #059669;
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.40);
+  }
+
+  /* ── Ghost danger (soft rose – for secondary Xóa button) ── */
+  .btn-danger-ghost {
+    @apply inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-sm font-semibold border-0 transition-colors duration-200;
+    background: #fff1f2;
+    color: #e11d48;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .btn-danger-ghost:hover:not(:disabled) {
+    background: #ffe4e6;
+    color: #be123c;
+  }
+
+  .btn-danger-ghost:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  /* ── Live pulse dot for status badges ── */
+  @keyframes live-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.85); }
+  }
+
+  .animate-live-pulse {
+    animation: live-pulse 1.8s ease-in-out infinite;
   }
 
   .btn-warning {

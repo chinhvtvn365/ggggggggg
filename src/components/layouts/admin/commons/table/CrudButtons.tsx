@@ -196,7 +196,7 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
             isDisabled={!selected || selected.length <= 0}
             onPress={openDeleteModal}
           >
-            <i className="fas fa-trash-alt" />
+            <i className="fas fa-trash-alt mr-1" />
             Xóa {selected && selected.length > 0 ? `(${selected.length})` : ""}
           </Button>
         )}

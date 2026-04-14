@@ -178,27 +178,33 @@ const Page = () => {
     table: {
       permission: "NewsGroup.Default",
       pagination: false,
+      tableStyles: { 
+        softActionIcons: true,
+        className: "bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden",
+        verticalGridlines: false
+      },
       columns: [
         {
           name: "Ảnh",
           dataField: "hinhAnh",
-          width: "80px",
+          width: "96px",
           alignItems: "center",
           alignHeader: "center",
           dataFormat: (data: ChuDeTinTuc) => (
             <div className="flex gap-2 justify-center items-center">
               {data?.hinhAnh?.dataUrl ? (
-                <Image
-                  src={data.hinhAnh.dataUrl}
-                  alt="Ảnh chủ đề"
-                  width={60}
-                  height={40}
-                  className="object-cover rounded"
-                  style={{ border: "1px solid #e0e0e0" }}
-                />
+                <div className="relative">
+                  <Image
+                    src={data.hinhAnh.dataUrl}
+                    alt="Ảnh chủ đề"
+                    width={80}
+                    height={45}
+                    className="object-cover rounded-md ring-1 ring-inset ring-black/5"
+                  />
+                </div>
               ) : (
-                <div className="flex items-center justify-center bg-gray-100 rounded text-gray-400"
-                  style={{ height: 40, width: 60, border: "1px solid #e0e0e0" }}>
+                <div className="flex items-center justify-center bg-slate-100 rounded-md ring-1 ring-inset ring-black/5 text-slate-400"
+                  style={{ height: 45, width: 80 }}>
                   <i className="pi pi-image text-base" />
                 </div>
               )}
@@ -215,15 +221,13 @@ const Page = () => {
             const isChild = data.parent !== null && data.parentId !== null;
             return (
               <div>
-                <span style={{
-                  fontWeight: isChild ? "normal" : "600",
-                  color: isChild ? "#64748b" : "#1e293b",
-                  fontSize: isChild ? "13px" : "14px",
-                }}>
+                <span className={`block line-clamp-2 leading-snug group-hover:text-blue-600 transition-colors ${
+                  isChild ? "font-normal text-slate-500 text-[13px]" : "font-semibold text-slate-900 text-[14px]"
+                }`}>
                   {hierarchy}{data.ten}
                 </span>
                 {data.duongDan && (
-                  <small className="block text-slate-400 text-[11px] mt-0.5">/{data.duongDan}</small>
+                  <small className="block text-[12px] font-mono text-slate-500 line-clamp-1 mt-0.5">/{data.duongDan}</small>
                 )}
               </div>
             );
@@ -235,14 +239,17 @@ const Page = () => {
           width: "120px",
           dataFormat: (data: ChuDeTinTuc) => (
             <div className="flex justify-center">
-              <Chip
-                size="sm"
-                className={data.isActive
-                  ? "bg-green-600 text-white font-semibold"
-                  : "bg-slate-500 text-white font-semibold"}
-              >
-                {data.isActive ? "Kích hoạt" : "Tạm dừng"}
-              </Chip>
+              {data.isActive ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-600 text-xs font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+                  Xuất bản
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-500 text-xs font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400 flex-shrink-0" />
+                  Tạm dừng
+                </span>
+              )}
             </div>
           ),
         },
@@ -271,14 +278,13 @@ const Page = () => {
           width: "80px",
           dataFormat: (data: ChuDeTinTuc) => (
             <div className="flex justify-center">
-              <Chip
-                size="sm"
-                className={(data.newsCount ?? 0) > 0
-                  ? "bg-blue-500 text-white font-semibold"
-                  : "bg-gray-200 text-gray-500 font-semibold"}
-              >
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                (data.newsCount ?? 0) > 0
+                  ? "bg-blue-50 text-blue-700"
+                  : "bg-slate-100 text-slate-400"
+              }`}>
                 {data.newsCount || 0} bài
-              </Chip>
+              </span>
             </div>
           ),
         },
@@ -317,6 +323,7 @@ const Page = () => {
     },
     filterTools: {
       inputPlaceholder: "Tìm theo chủ đề / chủ đề con",
+      softMode: true,
       components: [] as LookupOption[],
     },
     crudButtons: {
@@ -361,11 +368,12 @@ const Page = () => {
   };
 
   return (
-    <div className="p-4 bg-background rounded-2xl shadow-sm border border-gray-100">
+    <div className="w-full">
       <DataTable
         metadata={metadata}
         forceReload={forceReload}
         params={{ LoaiTinTuc: loaiTinTuc }}
+        rowClassNameCustom="transition-colors hover:bg-slate-50/80 group"
       />
     </div>
   );
