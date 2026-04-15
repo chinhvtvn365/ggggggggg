@@ -313,7 +313,7 @@ const FilterTools: React.FC<FilterToolsProps> = ({
                 setInputSearch(value);
                 debouncedSearch(value);
               }}
-              className="admin-filtertools-input-wrap h-9"
+              className="h-9"
             />
           </div>
         )}

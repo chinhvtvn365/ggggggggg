@@ -1686,13 +1686,13 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
               granted={granted}
             />
           </div>
-          <div className="">
+          <div className="admin-table-content-wrap">
             {topTableCustom && <>{topTableCustom()}</>}
 
             {renderHeader()}
 
             <div
-              className={`overflow-x-auto bg-white font-admin-table ${
+              className={`admin-table-surface admin-table-scroll overflow-x-auto bg-white font-admin-table ${
                 tableStyles?.className || ""
               }`}
             >

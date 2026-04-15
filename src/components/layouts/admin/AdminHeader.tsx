@@ -22,10 +22,16 @@ interface UserInfo {
 }
 
 interface AdminHeaderProps {
-  onMenuToggle?: () => void;
+  onDesktopMenuToggle?: () => void;
+  onMobileMenuOpen?: () => void;
+  isSidebarCollapsed?: boolean;
 }
 
-export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
+export default function AdminHeader({
+  onDesktopMenuToggle,
+  onMobileMenuOpen,
+  isSidebarCollapsed,
+}: AdminHeaderProps) {
   const router = useRouter();
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
@@ -82,19 +88,32 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
   };
 
   return (
-    <header className="admin-header-shell h-16 border-b border-slate-200/80 bg-white/85 backdrop-blur-md flex items-center justify-between px-4 md:px-6 lg:px-8 sticky top-0 z-30 shadow-[0_6px_20px_rgba(15,23,42,0.06)]">
+    <header className="admin-header-shell h-16 flex items-center justify-between px-4 md:px-6 lg:px-8 sticky top-0 z-30">
       {/* Left Section */}
       <div className="admin-header-left flex items-center gap-3 md:gap-5 min-w-0">
-        {onMenuToggle && (
+        {onMobileMenuOpen && (
           <Button
             isIconOnly
             size="sm"
             variant="outline"
-            onPress={onMenuToggle}
-            aria-label="Toggle menu"
-            className="admin-header-action-btn border-slate-300/80 bg-white/70"
+            onPress={onMobileMenuOpen}
+            aria-label="Open menu"
+            className="admin-header-action-btn border-slate-300/80 bg-white/70 lg:hidden"
           >
             <i className="fas fa-bars text-lg" />
+          </Button>
+        )}
+
+        {onDesktopMenuToggle && (
+          <Button
+            isIconOnly
+            size="sm"
+            variant="outline"
+            onPress={onDesktopMenuToggle}
+            aria-label="Toggle sidebar"
+            className="admin-header-action-btn hidden lg:inline-flex border-slate-300/80 bg-white/70"
+          >
+            <i className={`fas ${isSidebarCollapsed ? "fa-angles-right" : "fa-angles-left"} text-sm`} />
           </Button>
         )}
 
@@ -109,7 +128,7 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
             />
           </div>
           <div className="flex flex-col min-w-0 text-center">
-            <span className="admin-header-brand-text text-base md:text-[22px] font-bold uppercase tracking-tight leading-[1.5] whitespace-nowrap text-slate-800 text-center">
+            <span className="admin-header-brand-text text-base md:text-[22px] font-bold uppercase tracking-tight leading-[1.5] whitespace-nowrap text-center">
               Chính quyền điện tử
             </span>
           </div>
@@ -133,7 +152,7 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
             <span
               role="button"
               tabIndex={0}
-              className="admin-header-action-btn inline-flex min-h-9 items-center gap-2 rounded-medium border border-slate-300/80 bg-white/70 px-2.5 text-sm"
+              className="admin-header-action-btn admin-header-user-trigger inline-flex min-h-9 items-center gap-2 rounded-full border border-slate-300/80 bg-white/70 px-2.5 text-sm"
             >
               <span className="text-xs font-semibold hidden lg:block text-slate-700">
                 {userInfo?.firstName || "Quản trị viên"}
