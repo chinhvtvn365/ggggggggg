@@ -118,6 +118,9 @@ const FilterTools: React.FC<FilterToolsProps> = ({
   });
   const [inputSearch, setInputSearch] = useState("");
   const [isShowCustomizedFilter, setIsShowCustomizedFilter] = useState(false);
+  const rowClass = compact
+    ? "admin-filtertools-row flex items-center justify-center gap-2 overflow-x-auto"
+    : "admin-filtertools-row flex items-center justify-center gap-3 overflow-x-auto";
 
   // --- LOGIC ---
   useEffect(() => {
@@ -197,10 +200,14 @@ const FilterTools: React.FC<FilterToolsProps> = ({
           <div key={comp.name + idx} className={cn("", comp.width || "")}>
             <Dropdown>
               <Dropdown.Trigger>
-                <Button variant="secondary" size="sm">
+                <span
+                  role="button"
+                  tabIndex={0}
+                  className="inline-flex min-h-9 items-center gap-2 rounded-medium bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-700"
+                >
                   {selectedItem?.label || comp.placeholder || "-- Chọn --"}
                   <i className="fas fa-chevron-down" />
-                </Button>
+                </span>
               </Dropdown.Trigger>
               <Dropdown.Popover placement="bottom start">
                 <Dropdown.Menu
@@ -211,12 +218,11 @@ const FilterTools: React.FC<FilterToolsProps> = ({
                       : []
                   }
                 >
-                  <Dropdown.Item id="" textValue="Tất cả">
+                  <Dropdown.Item key="" textValue="Tất cả">
                     -- Chọn --
                   </Dropdown.Item>
                   {(comp.data || []).map((item: any) => (
                     <Dropdown.Item
-                      id={String(item.value)}
                       key={String(item.value)}
                       textValue={item.label}
                     >
@@ -289,41 +295,51 @@ const FilterTools: React.FC<FilterToolsProps> = ({
   };
 
   return (
-    <div className={className} onClick={onInteract}>
-      <div className="flex items-center justify-end gap-2 overflow-x-auto">
+    <div className={cn("admin-filtertools-wrap", className)} onClick={onInteract}>
+      <div className={rowClass}>
         {renderComponentTemplate(false)}
         {inputPlaceholder && (
-          <div className={cn("flex items-center gap-2", inputWidth || "w-64")}>
-            <i className="fas fa-search text-default-400" />
+          <div className={cn("admin-filtertools-search flex items-center gap-2", inputWidth || "")}>
+            <span className="admin-filtertools-search-icon inline-flex items-center justify-center text-slate-500">
+              <i className="fas fa-search" />
+            </span>
             <Input
               type="text"
-              size={32}
               variant="secondary"
               placeholder={inputPlaceholder}
               value={inputSearch}
-              onChange={(e) => {
-                setInputSearch(e.target.value);
-                debouncedSearch(e.target.value);
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                const value = e.target.value;
+                setInputSearch(value);
+                debouncedSearch(value);
               }}
+              className="admin-filtertools-input-wrap h-9"
             />
           </div>
         )}
         <Button
           isIconOnly
           variant={isShowCustomizedFilter ? "primary" : "secondary"}
-          size="sm"
+          size="md"
+          className="admin-filtertools-icon-btn"
           onPress={() => setIsShowCustomizedFilter(!isShowCustomizedFilter)}
         >
           <i className="fas fa-filter" />
         </Button>
-        <Button isIconOnly variant="secondary" size="sm" onPress={refresh}>
+        <Button
+          isIconOnly
+          variant="primary"
+          size="md"
+          className="admin-filtertools-refresh-btn bg-slate-700 text-white hover:bg-slate-800"
+          onPress={refresh}
+        >
           <i className="fas fa-sync-alt" />
         </Button>
       </div>
 
       {/* Advanced Filters Panel */}
       {isShowCustomizedFilter && (
-        <div className="flex flex-wrap gap-2 pt-2 justify-end">
+        <div className="admin-filtertools-advanced flex flex-wrap gap-2 pt-2 justify-end">
           {renderComponentTemplate(true)}
         </div>
       )}

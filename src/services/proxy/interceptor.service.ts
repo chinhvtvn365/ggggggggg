@@ -57,6 +57,33 @@ const fileUploadUrls = [
   "/api/app/file-upload/UploadComplete",
 ];
 
+const normalizeRelativeUrl = (url?: string): string => {
+  const rawUrl = url || "";
+  const baseUrl = process.env.NEXT_PUBLIC_BASEURL || "";
+  const lowered = rawUrl.toLowerCase();
+  const loweredBase = baseUrl.toLowerCase();
+
+  const relativeUrl =
+    loweredBase && lowered.startsWith(loweredBase)
+      ? lowered.slice(loweredBase.length)
+      : lowered;
+
+  return relativeUrl.split("?")[0];
+};
+
+const shouldIgnoreLoading = (url?: string): boolean => {
+  const normalizedUrl = normalizeRelativeUrl(url);
+  if (!normalizedUrl) return false;
+
+  const ignorePatterns = [...ignoreLoadingUrls, ...excludeUrl].map((path) =>
+    normalizeRelativeUrl(path),
+  );
+
+  return ignorePatterns.some(
+    (pattern) => Boolean(pattern) && normalizedUrl.includes(pattern),
+  );
+};
+
 // --- LOGIC CHÍNH ---
 
 let isInterceptorSetup = false;
@@ -85,8 +112,7 @@ export const setupInterceptors = (): void => {
   axios.interceptors.request.use(
     (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
       const requestConfig = config as RequestWithLoadingMeta;
-      const isIgnored = ignoreLoadingUrls.some((path) => config.url?.includes(path));
-      requestConfig._showLoading = !isIgnored;
+      requestConfig._showLoading = !shouldIgnoreLoading(config.url);
 
       if (requestConfig._showLoading) {
         requestCounter++;

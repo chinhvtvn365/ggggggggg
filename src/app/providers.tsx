@@ -1,22 +1,17 @@
 'use client'
 
-import { useRef, useEffect } from 'react'
 import {HeroUIProvider} from "@heroui/system";
 import { setupInterceptors } from '@/services/proxy/interceptor.service'
+import GlobalLoading from '@/components/common/GlobalLoading'
+
+// Register interceptors as early as possible on the client to avoid first-request race conditions.
+setupInterceptors()
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const initializedRef = useRef(false)
-
-  useEffect(() => {
-    if (!initializedRef.current) {
-      initializedRef.current = true
-      setupInterceptors()
-    }
-  }, [])
-
   return (
     <HeroUIProvider>
       {children}
+      <GlobalLoading />
     </HeroUIProvider>
   )
 }

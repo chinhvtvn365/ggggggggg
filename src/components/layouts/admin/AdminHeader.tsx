@@ -82,9 +82,9 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
   };
 
   return (
-    <header className="h-16 border-b border-slate-200/80 bg-white/85 backdrop-blur-md flex items-center justify-between px-4 md:px-6 lg:px-8 sticky top-0 z-30 shadow-[0_6px_20px_rgba(15,23,42,0.06)]">
+    <header className="admin-header-shell h-16 border-b border-slate-200/80 bg-white/85 backdrop-blur-md flex items-center justify-between px-4 md:px-6 lg:px-8 sticky top-0 z-30 shadow-[0_6px_20px_rgba(15,23,42,0.06)]">
       {/* Left Section */}
-      <div className="flex items-center gap-3 md:gap-5 min-w-0">
+      <div className="admin-header-left flex items-center gap-3 md:gap-5 min-w-0">
         {onMenuToggle && (
           <Button
             isIconOnly
@@ -92,14 +92,14 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
             variant="outline"
             onPress={onMenuToggle}
             aria-label="Toggle menu"
-            className="border-slate-300/80 bg-white/70"
+            className="admin-header-action-btn border-slate-300/80 bg-white/70"
           >
             <i className="fas fa-bars text-lg" />
           </Button>
         )}
 
-        <Link href="/quan-tri" className="flex items-center gap-3 md:gap-4 min-w-0">
-          <div className="relative w-10 h-10 md:w-11 md:h-11 flex items-center justify-center shrink-0">
+        <Link href="/quan-tri" className="admin-header-brand flex items-center gap-3 md:gap-4 min-w-0">
+          <div className="admin-header-logo relative w-10 h-10 md:w-11 md:h-11 flex items-center justify-center shrink-0">
             <Image
               src="/layout/images/logo.png"
               height={44}
@@ -109,7 +109,7 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
             />
           </div>
           <div className="flex flex-col min-w-0 text-center">
-            <span className="text-base md:text-[22px] font-bold uppercase tracking-tight leading-[1.5] whitespace-nowrap text-slate-800 text-center">
+            <span className="admin-header-brand-text text-base md:text-[22px] font-bold uppercase tracking-tight leading-[1.5] whitespace-nowrap text-slate-800 text-center">
               Chính quyền điện tử
             </span>
           </div>
@@ -117,11 +117,11 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
       </div>
 
       {/* Right Section */}
-      <div className="flex items-center gap-2 md:gap-3">
+      <div className="admin-header-right flex items-center gap-2 md:gap-3">
         <Button
           size="sm"
           variant="outline"
-          className="hidden md:flex border-slate-300/80 bg-white/70"
+          className="admin-header-action-btn hidden md:flex border-slate-300/80 bg-white/70"
           onPress={() => window.open("/", "_blank")}
         >
           <i className="fas fa-home text-sm" />
@@ -130,15 +130,19 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
 
         <Dropdown>
           <Dropdown.Trigger>
-            <Button variant="outline" size="sm" className="border-slate-300/80 bg-white/70 px-2.5">
+            <span
+              role="button"
+              tabIndex={0}
+              className="admin-header-action-btn inline-flex min-h-9 items-center gap-2 rounded-medium border border-slate-300/80 bg-white/70 px-2.5 text-sm"
+            >
               <span className="text-xs font-semibold hidden lg:block text-slate-700">
                 {userInfo?.firstName || "Quản trị viên"}
               </span>
-              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-600">
+              <span className="admin-header-avatar inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-600">
                 <i className="fas fa-user text-xs" />
               </span>
               <i className="fas fa-chevron-down text-[10px] text-slate-500" />
-            </Button>
+            </span>
           </Dropdown.Trigger>
 
           <Dropdown.Popover placement="bottom end">

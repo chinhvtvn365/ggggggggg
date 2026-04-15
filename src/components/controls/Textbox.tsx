@@ -75,9 +75,9 @@ const Textbox: React.FC<TextboxProps> = (props) => {
   const isHorizontal = layout === "horizontal";
 
   // Xử lý logic validation đặc thù cho Email
-  const finalRules = { ...rules };
+  const finalRules: RegisterOptions = { ...(rules || {}) };
   if (type === "email") {
-    finalRules.pattern = {
+    (finalRules as any).pattern = {
       value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
       message: "Định dạng email không hợp lệ",
     };
@@ -95,13 +95,18 @@ const Textbox: React.FC<TextboxProps> = (props) => {
           const errorMessage = fieldState.error?.message;
 
           // Component Input chung cho hầu hết các loại
-          const InputComponent = textAreaRow ? TextArea : Input;
+          const InputComponent = (textAreaRow ? TextArea : Input) as any;
 
           // Destructure only needed props from field
           const { ref, ...fieldProps } = field;
 
           const renderInput = () => (
             <div className="w-full">
+              {!isHorizontal && label && (
+                <label className="mb-1.5 block text-sm font-bold text-gray-700" style={labelStyle}>
+                  {label}
+                </label>
+              )}
               <InputComponent
                 ref={ref}
                 name={fieldProps.name}
@@ -109,7 +114,6 @@ const Textbox: React.FC<TextboxProps> = (props) => {
                 onBlur={fieldProps.onBlur}
                 id={name}
                 type={type === "number" ? "text" : type}
-                label={!isHorizontal ? label : null}
                 placeholder={placeholder}
                 disabled={disabled}
                 readOnly={readOnly}

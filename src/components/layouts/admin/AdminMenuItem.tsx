@@ -93,10 +93,10 @@ const AdminMenuItem = (props: AdminMenuItemProps) => {
   const subMenu = item.items && item.visible !== false && (
     <ul
       className={cn(
-        "layout-submenu overflow-hidden transition-all duration-300 ease-in-out",
+        "layout-submenu admin-submenu overflow-hidden transition-all duration-300 ease-in-out",
         root
-          ? "mt-0.5 mb-1.5 space-y-0 relative before:absolute before:left-[17px] before:top-0 before:bottom-0 before:w-[1px] before:bg-slate-100 before:rounded-full ml-0 pl-3"
-          : "mt-0.5 space-y-0 pl-3",
+          ? "mt-0.5 mb-1 space-y-0.5 ml-0 pl-1"
+          : "mt-0.5 space-y-0 pl-1",
         "max-h-[2000px] opacity-100" // Always expanded
       )}
     >
@@ -112,33 +112,37 @@ const AdminMenuItem = (props: AdminMenuItemProps) => {
   );
 
   const isChildItem = depth >= 2;
+  const isLevelOneChild = depth === 1;
   const hasItems = item.items && item.items.length > 0;
 
   const commonClasses = cn(
-    "flex items-center cursor-pointer transition-all duration-200 no-underline relative group/item",
-    "px-3 py-1.5 text-sm rounded-lg gap-2 mx-1 my-0",
+    "admin-menu-link flex items-center cursor-pointer transition-all duration-200 no-underline relative group/item",
+    "px-2.5 py-1.5 text-sm rounded-lg gap-2 mx-0.5 my-0.5",
     isChildItem
-      ? "font-normal hover:bg-slate-100/50"
+      ? "font-medium"
+      : isLevelOneChild
+        ? "font-semibold"
       : "font-bold",
     item.class,
     isActiveRoute
-      ? "bg-blue-100/40 text-blue-950 shadow-sm"
-      : "hover:bg-slate-100/80 text-slate-700 hover:text-slate-950"
+      ? "admin-menu-link-active"
+      : "admin-menu-link-idle"
   );
 
   return (
     <li
-      className={cn("list-none mb-1 transition-all duration-300", {
+      className={cn("list-none mb-0.5 transition-all duration-300", {
         "layout-root-menuitem": root,
         "active-menuitem": active,
-        "bg-slate-50/50 rounded-xl py-1 my-1.5 border border-slate-100/30 shadow-[0_1px_3px_rgba(0,0,0,0.01)]": root && hasItems,
+        "admin-menu-group": root && hasItems,
       })}
     >
       {root && item.label && item.visible !== false && !item.to && !item.items && (
-        <div className="mb-1.5 mt-4 px-4 flex items-center cursor-default">
-          <span className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-900 border-b-2 border-blue-600/20 pb-0.5">
+        <div className="admin-menu-heading mb-1 mt-3 px-3 flex items-center cursor-default">
+          <span className="admin-menu-heading-label text-[10px] font-black uppercase tracking-[0.12em] pb-0.5">
             {item.label}
           </span>
+          <div className="admin-menu-heading-line ml-2 h-px flex-1" />
         </div>
       )}
 
@@ -161,44 +165,53 @@ const AdminMenuItem = (props: AdminMenuItemProps) => {
             >
               {item.icon && (
                 <div className={cn(
-                  "flex justify-center shrink-0 transition-opacity",
+                  "admin-menu-icon-wrap flex justify-center shrink-0 transition-all duration-200",
                   root ? "w-5 opacity-100" : "w-5 opacity-80 group-hover/item:opacity-100"
                 )}>
-                  <i className={cn(item.icon, root ? "text-[16px]" : "text-[14px]", isActiveRoute ? "text-blue-700" : "text-slate-500 group-hover/item:text-blue-600")} />
+                  <i className={cn(item.icon, root ? "text-[16px]" : "text-[14px]", isActiveRoute ? "text-blue-700" : "text-slate-700 group-hover/item:text-slate-900")} />
                 </div>
               )}
               {!item.icon && isChildItem && (
                 <div className="w-5 flex justify-center shrink-0">
-                  <div className="w-1.5 h-1.5 rounded-full bg-slate-400 group-hover/item:bg-blue-600" />
+                  <div className="admin-menu-dot w-1.5 h-1.5 rounded-full transition-colors" />
                 </div>
               )}
               <span className={cn(
-                "flex-1 truncate transition-colors",
-                isChildItem ? "text-[12px] font-normal" : "text-[13px] font-semibold",
-                isActiveRoute ? "text-blue-700 font-bold" : "text-slate-700 group-hover/item:text-slate-900"
+                "admin-menu-label flex-1 truncate transition-colors",
+                isChildItem
+                  ? "text-[12px] font-medium"
+                  : isLevelOneChild
+                    ? "text-[12.5px] font-semibold"
+                    : "text-[13px] font-bold",
+                isActiveRoute
+                  ? isLevelOneChild
+                    ? "text-blue-700 font-semibold"
+                    : "text-blue-700 font-bold"
+                  : isLevelOneChild
+                    ? "text-slate-800 group-hover/item:text-slate-900"
+                    : "text-slate-700 group-hover/item:text-slate-900"
               )}>{item.label}</span>
-              {isActiveRoute && (
-                <div className="absolute left-[-4px] top-1.5 bottom-1.5 w-[3.5px] bg-blue-600 rounded-full shadow-[0_0_8px_rgba(37,99,235,0.4)]" />
-              )}
             </Link>
           ) : (
             <div
               onClick={(e) => itemClick(e)}
               className={cn(commonClasses, "group/parent pr-3", {
-                "text-blue-950": active && !isActiveRoute
+                "text-slate-900": active && !isActiveRoute,
+                "admin-menu-link-open": active && !isActiveRoute,
               })}
             >
               {item.icon && (
-                <div className="w-5 flex justify-center shrink-0 opacity-100 transition-opacity">
-                  <i className={cn(item.icon, "text-[16px]", active ? "text-blue-700" : "text-slate-600 group-hover/parent:text-blue-600")} />
+                <div className="admin-menu-icon-wrap w-5 flex justify-center shrink-0 opacity-100 transition-all duration-200">
+                  <i className={cn(item.icon, "text-[16px]", active ? "text-blue-700" : "text-slate-700 group-hover/parent:text-slate-900")} />
                 </div>
               )}
               <span className={cn(
-                "flex-1 truncate transition-colors text-[12.5px] font-extrabold",
+                "admin-menu-label flex-1 truncate transition-colors text-[12.5px]",
+                isLevelOneChild ? "font-bold" : "font-extrabold",
                 active ? "text-blue-700" : "text-slate-700 group-hover/item:text-slate-900"
               )}>{item.label}</span>
               <i className={cn(
-                "fas fa-chevron-right text-[8px] transition-transform duration-200",
+                "admin-menu-chevron fas fa-chevron-right text-[8px] transition-transform duration-200",
                 active ? "rotate-90 text-blue-700" : "text-slate-400"
               )} />
             </div>

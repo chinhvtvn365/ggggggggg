@@ -26,6 +26,8 @@
     "react-dom": "19.2.3",
     "react-hook-form": "^7.71.2",
     "sass": "^1.97.3",
+    "suneditor": "^2.47.8",
+    "suneditor-react": "^3.6.1",
     "use-debounce": "^10.1.0",
     "uuid": "^13.0.0",
     "zustand": "^5.0.8"

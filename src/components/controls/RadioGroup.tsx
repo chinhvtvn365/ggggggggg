@@ -92,9 +92,10 @@ const RadioGroup: React.FC<RadioGroupProps> = (props) => {
               )}
               <CustomRadioGroup
                 value={field.value !== undefined ? String(field.value) : undefined}
-                onValueChange={(val: any) => {
-                  field.onChange(val);
-                  if (change) change(val);
+                onChange={(val: any) => {
+                  const nextValue = val?.target?.value ?? val;
+                  field.onChange(nextValue);
+                  if (change) change(nextValue);
                 }}
                 isDisabled={disabled}
                 orientation={isHorizontal ? "horizontal" : "vertical"}

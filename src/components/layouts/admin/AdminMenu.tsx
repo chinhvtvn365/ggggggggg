@@ -12,13 +12,13 @@ interface AdminMenuProps {
 const AdminMenu = ({ model }: AdminMenuProps) => {
   return (
     <MenuProvider>
-      <ul className="layout-menu list-none p-0 m-0">
+      <ul className="layout-menu admin-menu-root list-none p-0 m-0 space-y-0.5">
         {model.map((item, i) => {
           return !item.seperator ? (
             <AdminMenuItem item={item} root={true} index={i} key={item.label} />
           ) : (
             <li
-              className="menu-separator border-t border-slate-200 my-2"
+              className="menu-separator admin-menu-separator"
               key={`sep-${i}`}
             ></li>
           );

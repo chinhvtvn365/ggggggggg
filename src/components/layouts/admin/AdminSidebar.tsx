@@ -119,15 +119,12 @@ export default function AdminSidebar({ setBreadcrumbsData, setUserInfo: setParen
   }, [model, pathname, setBreadcrumbsData]);
 
   return (
-    <aside className="w-[240px] flex flex-col overflow-hidden relative z-20 shadow-[1px_0_10px_rgba(0,0,0,0.02)] bg-white border-r border-slate-100">
-      {/* Sidebar Content */}
-      <div className="flex-1 overflow-y-auto pt-6 pb-8 px-2
-        [&::-webkit-scrollbar]:w-1
-        [&::-webkit-scrollbar-track]:bg-transparent
-        [&::-webkit-scrollbar-thumb]:bg-slate-100
-        hover:[&::-webkit-scrollbar-thumb]:bg-blue-100/60
-        transition-all scroll-smooth">
-        <AdminMenu model={model} />
+    <aside className="admin-sidebar-shell w-[268px] flex flex-col overflow-hidden relative z-20">
+      <div className="admin-sidebar-ambient" aria-hidden />
+      <div className="admin-sidebar-scroll flex-1 overflow-y-auto p-0 rounded-none relative transition-all scroll-smooth">
+        <div className="admin-sidebar-panel">
+          <AdminMenu model={model} />
+        </div>
       </div>
     </aside>
   );

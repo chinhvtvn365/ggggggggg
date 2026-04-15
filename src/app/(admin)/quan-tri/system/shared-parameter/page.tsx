@@ -5,7 +5,7 @@ import React, { useMemo } from "react";
 import { Chip } from "@heroui/react";
 import moment from "moment";
 
-import DataTable from "@/components/commons/table/DataTable";
+import DataTable from "@/components/layouts/admin/commons/table/DataTable";
 import { DELETE_TYPE_SINGLE } from "@/constants/datatable.enum";
 
 // Lazy load Modal Thêm/Sửa

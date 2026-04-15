@@ -242,12 +242,24 @@ const CreateModal: React.FC<CreateModalProps> = (props) => {
               </Modal.Body>
               <Modal.Footer>
                 {customFooter}
-                <Button type="button" variant="outline" onPress={handleClose}>
-                  Đóng
-                </Button>
-                <Button type="submit" form="create-modal-form" variant="primary">
-                  {uiConfigs?.submitButtonLabel ?? "Lưu"}
-                </Button>
+                <div className="ml-auto flex items-center gap-2">
+                  <Button
+                    type="submit"
+                    form="create-modal-form"
+                    variant="primary"
+                  >
+                    <i className="fas fa-save mr-1" />
+                    {uiConfigs?.submitButtonLabel ?? "Lưu"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onPress={handleClose}
+                  >
+                    <i className="fas fa-times mr-1" />
+                    Đóng
+                  </Button>
+                </div>
               </Modal.Footer>
             </Modal.Dialog>
           </Modal.Container>

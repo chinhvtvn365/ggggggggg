@@ -32,17 +32,17 @@ export default function AdminLayout({
   }, []);
 
   return (
-    <div className="flex h-screen">
+    <div className="admin-layout-root flex h-screen">
       <AdminSidebar
         setBreadcrumbsData={setBreadcrumbsData}
         setUserInfo={setUserInfo}
       />
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="admin-layout-content flex flex-col flex-1 overflow-hidden">
         <AdminHeader />
 
-        <main className="flex-1 overflow-y-auto w-full px-3 py-3 md:px-5 md:py-4 lg:px-6 lg:py-5">
-          <div className="flex items-center justify-between gap-3">
-            <div>
+        <main className="admin-layout-main flex-1 overflow-y-auto w-full px-3 py-3 md:px-5 md:py-4 lg:px-6 lg:py-5">
+          <div className="admin-breadcrumb-bar flex items-center justify-between gap-3">
+            <div className="admin-breadcrumbs-wrap min-w-0">
               {breadcrumbsData.length > 0 && (
                 <Breadcrumbs>
                   <Breadcrumbs.Item key="home" href="/quan-tri">
@@ -61,7 +61,7 @@ export default function AdminLayout({
 
             <div
               id="admin-page-actions"
-              className="flex items-center gap-2 ml-auto"
+              className="admin-page-actions flex items-center gap-2 ml-auto"
             />
           </div>
           {children}

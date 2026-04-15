@@ -157,6 +157,7 @@ const Page = () => {
       transformStrategy: (data: Record<string, unknown>[] = []) => data,
     },
     table: {
+      pagination: true,
       columns: [
         // ── Ảnh ──
         {
@@ -211,13 +212,13 @@ const Page = () => {
           dataFormatEdit: (row: NewsItem) => (
             <div className="min-w-[200px]">
               <div
-                className="text-sm font-medium text-[#111827] line-clamp-2"
+                className="text-sm font-medium text-[#111827] whitespace-normal break-words"
                 style={{ lineHeight: "1.5" }}
               >
                 {row.tieuDe}
               </div>
               {row.duongDanThanThien && (
-                <div className="mt-1 max-w-[280px] text-xs text-[#6B7280] truncate font-mono">
+                <div className="mt-1 max-w-[280px] text-xs text-[#6B7280] whitespace-normal break-all font-mono">
                   /{row.duongDanTopic}/{row.duongDanThanThien}
                 </div>
               )}
@@ -230,7 +231,7 @@ const Page = () => {
           name: "Nội dung tóm tắt",
           dataField: "noiDungTomTat",
           dataFormatEdit: (row: NewsItem) => (
-            <div className="line-clamp-1 text-sm text-slate-500">
+            <div className="line-clamp-2 text-sm text-slate-500 break-words">
               {row.noiDungTomTat || "Chưa có nội dung tóm tắt"}
             </div>
           ),

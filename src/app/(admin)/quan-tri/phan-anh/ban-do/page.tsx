@@ -35,7 +35,12 @@ const BanDo = () => {
   }, [currentYear]);
 
   // Calculate date range based on filters
-  const getDateRangeFromFilters = (yearVal, timeRange, startD, endD) => {
+  const getDateRangeFromFilters = (
+    yearVal: string,
+    timeRange: string,
+    startD: string,
+    endD: string,
+  ) => {
     let startDate, endDate;
     const today = new Date();
 
@@ -199,7 +204,7 @@ const BanDo = () => {
           <Button 
             isIconOnly 
             color="primary" 
-            variant="solid" 
+            variant="primary" 
             className="w-10 h-10 min-w-10 shadow-md hover:scale-105 transition-transform"
             onPress={() => {
               const current = new Date().getFullYear().toString();

@@ -61,9 +61,10 @@ const CheckboxControl: React.FC<CheckboxControlProps> = (props) => {
                 {type === "checkbox" ? (
                   <CustomCheckbox
                     isSelected={isSelected}
-                    onValueChange={(val: any) => {
-                      field.onChange(val);
-                      invokeActions(val);
+                    onChange={(val: any) => {
+                      const nextValue = val?.target?.checked ?? val;
+                      field.onChange(nextValue);
+                      invokeActions(!!nextValue);
                     }}
                     isDisabled={disabled}
                     className={cn(labelClassName)}
@@ -74,9 +75,10 @@ const CheckboxControl: React.FC<CheckboxControlProps> = (props) => {
                   <div className="flex items-center gap-3">
                     <CustomSwitch
                       isSelected={isSelected}
-                      onValueChange={(val: any) => {
-                        field.onChange(val);
-                        invokeActions(val);
+                      onChange={(val: any) => {
+                        const nextValue = val?.target?.checked ?? val;
+                        field.onChange(nextValue);
+                        invokeActions(!!nextValue);
                       }}
                       isDisabled={disabled}
                       color="primary"

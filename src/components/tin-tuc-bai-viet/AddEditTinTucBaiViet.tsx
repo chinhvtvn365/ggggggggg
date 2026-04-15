@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { REQUIRED } from "@/constants/datatable.enum";
 import { proxyService } from "@/services";
@@ -8,6 +8,7 @@ import { proxyService } from "@/services";
 import Textbox from "@/components/controls/Textbox";
 import DropdownControl from "@/components/controls/DropdownControl";
 import CalendarControl from "@/components/controls/CalendarControl";
+import SunEditorField from "../controls/SunEditorField";
 
 // Utilities
 const removeVietnameseTones = (str: string) =>
@@ -17,6 +18,13 @@ const removeVietnameseTones = (str: string) =>
     .replace(/đ/g, "d")
     .replace(/Đ/g, "D");
 
+interface TinTucDetail {
+  mucDoUuTien?: number;
+  hinhAnh?: unknown;
+  HinhAnh?: unknown;
+  [key: string]: unknown;
+}
+
 const AddEditTinTucBaiViet = ({ data, dataSource }: any) => {
   const methods = useFormContext();
   const { control, setValue, getValues } = methods;
@@ -25,35 +33,65 @@ const AddEditTinTucBaiViet = ({ data, dataSource }: any) => {
   const [randomValue] = useState(() => Math.floor(Math.random() * 10000));
   const inputFile = useRef<HTMLInputElement>(null);
   const [imagePreviews, setImagePreviews] = useState<string | null>(null);
-  const loaiTinTucOptions = dataSource?.LoaiTinTuc || dataSource?.dsLoaiBanTin || [];
-  const initialChuDeOptions = dataSource?.ChuDe || dataSource?.dsChuDe || [];
+  const isClient = typeof window !== "undefined";
+  const loaiTinTucOptions = useMemo(
+    () => dataSource?.LoaiTinTuc || dataSource?.dsLoaiBanTin || [],
+    [dataSource],
+  );
+  const initialChuDeOptions = useMemo(
+    () => dataSource?.ChuDe || dataSource?.dsChuDe || [],
+    [dataSource],
+  );
 
-  const resolveImagePreview: any = useCallback((source: any) => {
+  const resolveImagePreview = useCallback((source: unknown): string | null => {
     const ASSETS_URL = process.env.NEXT_PUBLIC_ASSETS_URL || "";
-    if (!source) return null;
-    const candidate = source?.hinhAnh ?? source?.HinhAnh ?? source;
-    if (Array.isArray(candidate) && candidate.length > 0) {
-      return resolveImagePreview(candidate[0]);
-    }
-    if (typeof candidate === "string") {
-      return candidate.startsWith("http") || candidate.startsWith("data:") ? candidate : ASSETS_URL + candidate;
-    }
-    if (candidate && typeof candidate === "object") {
-      const path = candidate.dataUrl || candidate.path || candidate.url || candidate.fileUrl || candidate.fullPath || candidate.link;
-      if (path && (path.startsWith("data:") || path.startsWith("http"))) {
-        return path;
+
+    const resolveCandidate = (candidate: unknown): string | null => {
+      if (!candidate) return null;
+
+      if (Array.isArray(candidate) && candidate.length > 0) {
+        return resolveCandidate(candidate[0]);
       }
-      return path ? ASSETS_URL + path : null;
-    }
-    return null;
+
+      if (typeof candidate === "string") {
+        return candidate.startsWith("http") || candidate.startsWith("data:")
+          ? candidate
+          : ASSETS_URL + candidate;
+      }
+
+      if (candidate && typeof candidate === "object") {
+        const obj = candidate as Record<string, unknown>;
+        const path =
+          obj.dataUrl ||
+          obj.path ||
+          obj.url ||
+          obj.fileUrl ||
+          obj.fullPath ||
+          obj.link;
+
+        if (typeof path === "string") {
+          if (path.startsWith("data:") || path.startsWith("http")) {
+            return path;
+          }
+          return ASSETS_URL + path;
+        }
+      }
+
+      return null;
+    };
+
+    if (!source || typeof source !== "object") return resolveCandidate(source);
+
+    const sourceObj = source as Record<string, unknown>;
+    return resolveCandidate(sourceObj.hinhAnh ?? sourceObj.HinhAnh ?? source);
   }, []);
 
   const fetchDetail = useCallback(async () => {
     if (!data?.id) return;
     try {
-      const res = await proxyService.get(`/api/app/tin-tuc-bai-viet/${data.id}`);
+      const res = await proxyService.get<TinTucDetail>(`/api/app/tin-tuc-bai-viet/${data.id}`);
       if (res?.status === 200 && res.data) {
-        Object.entries(res.data).forEach(([key, val]) => setValue(key, val));
+        Object.entries(res.data).forEach(([key, val]) => setValue(key as any, val));
         setValue("UuTien", res.data?.mucDoUuTien === 1);
         const previewSource = res.data?.hinhAnh ?? res.data?.HinhAnh ?? data?.hinhAnh ?? data?.HinhAnh;
         setImagePreviews(resolveImagePreview(previewSource));
@@ -64,6 +102,7 @@ const AddEditTinTucBaiViet = ({ data, dataSource }: any) => {
   }, [data, setValue, resolveImagePreview]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (data?.id) fetchDetail();
   }, [data?.id, fetchDetail]);
 
@@ -192,6 +231,7 @@ const AddEditTinTucBaiViet = ({ data, dataSource }: any) => {
                   >
                     {imagePreviews ? (
                       <div className="relative w-full h-full">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img 
                           src={imagePreviews} 
                           alt="Thumbnail Preview" 
@@ -235,129 +275,40 @@ const AddEditTinTucBaiViet = ({ data, dataSource }: any) => {
         </div>
       </div>
 
-      {/* KHỐI 2: NỘI DUNG CHI TIẾT */}
-      <div>
-        <h5 className="text-lg font-semibold text-blue-600 mb-3 border-b pb-2">Nội dung chi tiết</h5>
-        <div className="grid grid-cols-12 gap-x-5 gap-y-3">
-          <div className="col-span-12">
-             <Textbox
-                label=""
-                name="noiDung"
-                textAreaRow={12}
-                placeholder="Soạn thảo nội dung bài viết vào đây..."
-                rules={REQUIRED}
-             />
-             <small className="text-gray-500 block text-right mt-1">* Hỗ trợ nhập liệu HTML, văn bản, đường dẫn đính kèm trực tiếp.</small>
-          </div>
-          
-       
+        <div className="col-12">
+          <SunEditorField
+            label={<span>Nội dung</span>}
+            name="noiDung"
+            configs={{
+              direction: "horizontal",
+              height: "300px",
+              layout: "2|10",
+            }}
+            labelWidth="col-2"
+            inputWidth="col-10"
+            defaultValue=""
+            rules={{
+              required: "Nội dung bài viết là bắt buộc",
+              validate: (value: string) => {
+                if (!value || value.trim() === "") {
+                  return "Vui lòng nhập nội dung bài viết"
+                }
+                // Loại bỏ HTML tags và kiểm tra có text thực sự không
+                const textContent = value.replace(/<[^>]*>/g, "").trim()
+                if (textContent.length === 0) {
+                  return "Nội dung bài viết không được để trống"
+                }
+                if (textContent.length < 50) {
+                  return "Nội dung bài viết phải có ít nhất 50 ký tự"
+                }
+                return true
+              },
+            }}
+            className=""
+            editorLoaded={isClient}
+            change={() => {}}
+          />
         </div>
-      </div>
-
-      {/* KHỐI 3: TRẠNG THÁI & SEO */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-         {/* Setting Box */}
-         <div className="bg-gray-50 p-4 border border-gray-200 rounded-lg shadow-sm h-fit">
-            <h6 className="font-semibold text-gray-700 uppercase mb-3 text-sm flex items-center gap-2">
-               <i className="fa-solid fa-sliders text-blue-500"></i> Cài đặt trạng thái
-            </h6>
-            <div className="space-y-3">
-              <Controller
-                name="isActive"
-                control={control}
-                defaultValue={true}
-                render={({ field }) => (
-                  <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white rounded transition-colors shadow-sm bg-white/50 border border-gray-100">
-                    <input
-                      type="checkbox"
-                      checked={field.value}
-                      onChange={(e) => field.onChange(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <span className="text-sm font-medium text-gray-800">Hiển thị lên Portal công khai</span>
-                  </label>
-                )}
-              />
-              <Controller
-                name="UuTien"
-                control={control}
-                defaultValue={false}
-                render={({ field }) => (
-                  <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-white rounded transition-colors shadow-sm bg-white/50 border border-gray-100">
-                    <input
-                      type="checkbox"
-                      checked={field.value}
-                      onChange={(e) => field.onChange(e.target.checked)}
-                      className="w-4 h-4 text-yellow-500 border-gray-300 rounded focus:ring-yellow-500"
-                    />
-                    <span className="text-sm font-medium text-gray-800">Đánh dấu bài viết nổi bật ⭐</span>
-                  </label>
-                )}
-              />
-              {isThongBao && (
-                <div className="ml-6 space-y-2 border-l-2 border-blue-300 pl-4 py-1">
-                  <Controller
-                    name="thongBao"
-                    control={control}
-                    defaultValue={false}
-                    render={({ field }) => (
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={field.value}
-                          onChange={(e) => field.onChange(e.target.checked)}
-                          className="w-4 h-4 text-indigo-600 border-gray-300 rounded"
-                        />
-                        <span className="text-sm text-gray-700">Dạng thông báo</span>
-                      </label>
-                    )}
-                  />
-                  <Controller
-                    name="khanCap"
-                    control={control}
-                    defaultValue={false}
-                    render={({ field }) => (
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={field.value}
-                          onChange={(e) => field.onChange(e.target.checked)}
-                          className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
-                        />
-                        <span className="text-sm font-bold text-red-600 tracking-wide">🚨 Tin Khẩn Cấp</span>
-                      </label>
-                    )}
-                  />
-                </div>
-              )}
-            </div>
-         </div>
-
-         {/* SEO Box */}
-         <div className="bg-gray-50 p-4 border border-gray-200 rounded-lg shadow-sm">
-            <h6 className="font-semibold text-gray-700 uppercase mb-3 text-sm flex items-center gap-2">
-               <i className="fa-brands fa-google text-blue-500"></i> Cài đặt SEO
-            </h6>
-            <div className="space-y-3">
-              <Textbox
-                 label="Tiêu đề SEO"
-                 name="tieuDeSEO"
-                 layout="vertical"
-              />
-              <Textbox
-                 label="Từ khóa SEO"
-                 name="tuKhoaSEO"
-                 layout="vertical"
-              />
-              <Textbox
-                 label="Mô tả SEO"
-                 name="moTaTuKhoa"
-                 textAreaRow={2}
-                 layout="vertical"
-              />
-            </div>
-         </div>
-      </div>
 
     </div>
   );

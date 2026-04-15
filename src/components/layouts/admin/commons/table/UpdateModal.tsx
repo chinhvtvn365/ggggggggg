@@ -262,14 +262,14 @@ const UpdateModal: React.FC<UpdateModalProps> = (props) => {
             return null;
           })}
 
-          <div className="flex gap-2">
+          <div className="ml-auto flex items-center gap-2">
             {!data?.disabled && (
               <Button
                 type="submit"
                 form="update-modal-form"
                 variant="primary"
               >
-                <i className="fas fa-save" />
+                <i className="fas fa-save mr-1" />
                 Lưu
               </Button>
             )}
@@ -278,7 +278,7 @@ const UpdateModal: React.FC<UpdateModalProps> = (props) => {
               variant="outline"
               onPress={toggle}
             >
-              <i className="fas fa-times" />
+              <i className="fas fa-times mr-1" />
               Đóng
             </Button>
           </div>

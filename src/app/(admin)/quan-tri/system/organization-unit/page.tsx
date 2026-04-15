@@ -61,12 +61,13 @@ const OrganizationUnitPage = () => {
     try {
       const res = await proxyService.get(`/api/app/danh-muc/danh-sach-ma?${query}`);
       if (res?.status === 200 && res?.data) {
-        setDsDonViChucNang(res.data['DonViChucNang'].map((x: any) => ({
+        const responseData = res.data as Record<string, any[]>;
+        setDsDonViChucNang((responseData["DonViChucNang"] || []).map((x: any) => ({
           label: x.ten,
           value: x.ma,
           shortlabel: x.tenVietTat
         })));
-        setDsPhanLoaiDonVi(res.data['PhanLoaiDonVi'].map((x: any) => ({
+        setDsPhanLoaiDonVi((responseData["PhanLoaiDonVi"] || []).map((x: any) => ({
           label: x.ten,
           value: x.id,
           shortlabel: x.tenVietTat
@@ -79,7 +80,8 @@ const OrganizationUnitPage = () => {
     try {
       const res = await proxyService.get("/api/app/organization-unit/phan-cap");
       if (res.status === 200 && res.data) {
-        setDsDonViTrucThuoc(res.data.map((item: any) => ({
+        const responseData = res.data as any[];
+        setDsDonViTrucThuoc(responseData.map((item: any) => ({
           label: item.shortName,
           value: item.id,
           level: item?.level,
