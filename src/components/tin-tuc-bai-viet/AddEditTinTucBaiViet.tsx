@@ -119,8 +119,8 @@ const AddEditTinTucBaiViet = ({ data, dataSource }: any) => {
     <div className="p-2 space-y-6">
       {/* KHỐI 1: THÔNG TIN CHUNG */}
       <div>
-        <h5 className="text-lg font-semibold text-blue-600 mb-3 border-b pb-2">Thông tin chung</h5>
-        <div className="grid grid-cols-12 gap-x-5 gap-y-3">
+        <h5 className="text-lg font-semibold text-blue-700 pb-2">Thông tin chung</h5>
+        <div className="grid grid-cols-12 gap-x-5">
           {loaiTinTucOptions.length > 1 && (
             <div className="col-span-12 md:col-span-6">
               <DropdownControl
@@ -129,7 +129,7 @@ const AddEditTinTucBaiViet = ({ data, dataSource }: any) => {
                 options={loaiTinTucOptions}
                 placeholder="Chọn loại tin tức"
                 layout="horizontal"
-                labelWidth="w-[30%]"
+                labelWidth="col-span-4"
               />
             </div>
           )}
@@ -144,7 +144,8 @@ const AddEditTinTucBaiViet = ({ data, dataSource }: any) => {
                   value?.trim().length >= 10 || "Tiêu đề phải có ít nhất 10 ký tự"
               }}
               layout="horizontal"
-              labelWidth="w-[15%]"
+              labelWidth="col-span-2"
+              inputWidth="col-span-10"
               change={(e: any) => {
                 const value = e.target.value;
                 const slug = `${removeVietnameseTones(value.toLowerCase())}-${randomValue}`
@@ -164,11 +165,11 @@ const AddEditTinTucBaiViet = ({ data, dataSource }: any) => {
 
           <div className="col-span-12 md:col-span-6">
             <Textbox
-              label="Đường dẫn (Slug)"
+              label="Đường dẫn"
               name="duongDanThanThien"
               rules={REQUIRED}
               layout="horizontal"
-              labelWidth="w-[30%]"
+              labelWidth="col-span-4"
             />
           </div>
 
@@ -178,7 +179,7 @@ const AddEditTinTucBaiViet = ({ data, dataSource }: any) => {
               name="ngayXuatBan"
               rules={REQUIRED}
               layout="horizontal"
-              labelWidth="w-[30%]"
+              labelWidth="col-span-4"
             />
           </div>
 
@@ -191,7 +192,7 @@ const AddEditTinTucBaiViet = ({ data, dataSource }: any) => {
                 rules={REQUIRED}
                 placeholder="Chọn chủ đề"
                 layout="horizontal"
-                labelWidth="w-[30%]"
+                labelWidth="col-span-4"
               />
             </div>
           )}
@@ -202,7 +203,7 @@ const AddEditTinTucBaiViet = ({ data, dataSource }: any) => {
               name="nguonTin"
               placeholder="Nhập đường link (nếu có)"
               layout="horizontal"
-              labelWidth="w-[30%]"
+              labelWidth="col-span-4"
             />
           </div>
 
@@ -213,7 +214,8 @@ const AddEditTinTucBaiViet = ({ data, dataSource }: any) => {
               rules={REQUIRED}
               textAreaRow={5}
               layout="horizontal"
-              labelWidth="w-[22.5%]"
+              labelWidth="col-span-3"
+              inputWidth="col-span-9"
             />
           </div>
 
@@ -275,7 +277,7 @@ const AddEditTinTucBaiViet = ({ data, dataSource }: any) => {
         </div>
       </div>
 
-        <div className="col-12">
+        <div className="col-span-12 overflow-hidden">
           <SunEditorField
             label={<span>Nội dung</span>}
             name="noiDung"
@@ -284,8 +286,8 @@ const AddEditTinTucBaiViet = ({ data, dataSource }: any) => {
               height: "300px",
               layout: "2|10",
             }}
-            labelWidth="col-2"
-            inputWidth="col-10"
+            labelWidth="col-span-2"
+            inputWidth="col-span-10"
             defaultValue=""
             rules={{
               required: "Nội dung bài viết là bắt buộc",

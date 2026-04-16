@@ -58,7 +58,7 @@ const UserAddEditContent = ({ data, dataSource }: { data: any, dataSource: any }
         <div className="flex gap-6">
           <button
             onClick={() => setActiveTab("info")}
-            className={`px-0 pb-3 h-12 font-semibold transition-colors border-b-2 ${
+            className={`px-0 h-12 font-semibold transition-colors border-b-2 ${
               activeTab === "info" 
                 ? "border-blue-600 text-blue-600" 
                 : "border-transparent text-gray-500 hover:text-gray-700"
@@ -68,7 +68,7 @@ const UserAddEditContent = ({ data, dataSource }: { data: any, dataSource: any }
           </button>
           <button
             onClick={() => setActiveTab("roles")}
-            className={`px-0 pb-3 h-12 font-semibold transition-colors border-b-2 ${
+            className={`px-0 h-12 font-semibold transition-colors border-b-2 ${
               activeTab === "roles" 
                 ? "border-blue-600 text-blue-600" 
                 : "border-transparent text-gray-500 hover:text-gray-700"
@@ -82,7 +82,7 @@ const UserAddEditContent = ({ data, dataSource }: { data: any, dataSource: any }
       {/* TAB 1: THÔNG TIN NGƯỜI DÙNG */}
       {activeTab === "info" && (
         <div className="py-4 space-y-4">
-              <div className="grid grid-cols-12 gap-4">
+              <div className="grid grid-cols-12 gap-x-5">
                 <div className="col-span-12 md:col-span-6">
                   <Textbox 
                     label="Tài khoản" 
@@ -201,7 +201,7 @@ const UserAddEditContent = ({ data, dataSource }: { data: any, dataSource: any }
         {/* TAB 2: PHÂN QUYỀN VAI TRÒ */}
         {activeTab === "roles" && (
           <div className="py-4">
-              <div className="grid grid-cols-12 gap-4">
+              <div className="grid grid-cols-12 gap-x-5">
                 <div className="col-span-12 md:col-span-6 bg-gray-50 p-4 rounded-xl border border-gray-200">
                   <h5 className="text-lg font-bold text-blue-600 mb-4 flex items-center gap-2">
                     <i className="fa-solid fa-user-shield"></i>

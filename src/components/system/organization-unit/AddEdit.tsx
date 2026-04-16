@@ -2,8 +2,6 @@
 
 import React, { Fragment, useEffect, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
-// HeroUI Components
-import { Input } from "@heroui/react";
 
 import Textbox from "@/components/controls/Textbox";
 import DropdownControl from "@/components/controls/DropdownControl";
@@ -65,7 +63,7 @@ const AddUnitModalContent = ({ data, dataSource }: { data: any; dataSource: any 
             <h5>Thông tin đơn vị</h5>
           </div>
 
-          <div className="grid grid-cols-12 gap-4">
+          <div className="grid grid-cols-12 gap-x-5">
             <div className="col-span-12 md:col-span-6">
               <Textbox
                 label="Tên đơn vị"

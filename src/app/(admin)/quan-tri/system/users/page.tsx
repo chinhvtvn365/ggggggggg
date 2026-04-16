@@ -140,7 +140,7 @@ const UserPage = () => {
         {
           name: "Họ và tên",
           dataField: "name",
-          dataFormatEdit: (row: any) => <span className="font-medium text-gray-700">{row.name}</span>,
+          dataFormatEdit: (row: any) => <span className="font-medium">{row.name}</span>,
         },
         {
           name: "Tài khoản",
@@ -161,13 +161,13 @@ const UserPage = () => {
         { name: "Email", dataField: "email" },
         { name: "Điện thoại", dataField: "phoneNumber" },
         {
-          name: "Vai trò",
+          name: "Phân quyền",
           dataFormat: (row: any) => (
             <div className="flex flex-wrap gap-1">
               {row.extraProperties?.roleNames?.map((item: string, index: number) => (
                 <span 
                   key={index} 
-                  className="px-2.5 py-1 text-xs rounded-full bg-purple-600 text-white font-semibold shadow-sm"
+                  className="px-2.5 py-1 text-xs rounded-full bg-blue-500 text-white font-semibold shadow-sm"
                 >
                   {item}
                 </span>
@@ -182,24 +182,7 @@ const UserPage = () => {
             return <span>{unit?.label || "---"}</span>;
           },
         },
-        {
-          name: "Trạng thái",
-          dataFormat: (row: any) => (
-            <div className="text-center">
-              {row.isActive ? (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full bg-green-600 text-white font-semibold shadow-sm">
-                  <span className="w-1.5 h-1.5 bg-white rounded-full"></span>
-                  Hoạt động
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full bg-red-600 text-white font-semibold shadow-sm">
-                  <span className="w-1.5 h-1.5 bg-white rounded-full"></span>
-                  Khóa
-                </span>
-              )}
-            </div>
-          ),
-        },
+       
       ],
     },
     filterTools: {
@@ -224,7 +207,7 @@ const UserPage = () => {
       create: {
         active: true,
         permission: "AbpIdentity.Users.Create",
-        style: { minWidth: "60%" },
+        style: { width: "800px" },
         uiConfigs: { headerText: "Thêm người dùng mới" },
         headers: { iv },
         dataSource: { roles, oUnit },
@@ -236,7 +219,7 @@ const UserPage = () => {
       update: {
         active: true,
         permission: "AbpIdentity.Users.Update",
-        style: { minWidth: "60%" },
+        style: { width: "800px" },
         uiConfigs: { headerText: "Cập nhật thông tin" },
         headers: { iv },
         dataSource: { roles, oUnit },
@@ -252,16 +235,6 @@ const UserPage = () => {
         api: "/api/identity/users",
       },
       customList: [
-        {
-          label: "",
-          title: "Phân quyền chi tiết",
-          color: "info",
-          icon: "fa-solid fa-shield-halved",
-          onClick: (row: any) => {
-            setSelectedUser(row);
-            setPermissionModalOpen(true);
-          },
-        },
       ],
     },
   };

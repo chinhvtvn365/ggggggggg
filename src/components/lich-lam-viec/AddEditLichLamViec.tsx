@@ -68,7 +68,7 @@ const ScheduleParameters = ({ nestIndex, control }: { nestIndex: number; control
           onClick={() => append({ codeTime: "SANG", content: "", place: "", participation: "", id: uuidv4() })}
           className="text-sm text-blue-600 hover:text-blue-800 font-medium"
         >
-          <i className="fa-solid fa-plus mr-1"></i> Thêm dòng nội dung
+          <i className="fa-solid fa-plus"></i> Thêm dòng nội dung
         </button>
       </div>
     </div>
@@ -117,7 +117,7 @@ const ScheduleBosses = ({ control }: { control: any }) => {
                   rules={REQUIRED}
                   name={`scheduleBosses.${index}.username`}
                   layout="horizontal"
-                  labelWidth="w-1/4"
+                  labelWidth="col-span-4"
                 />
               </div>
               <div className="col-span-12 md:col-span-6">
@@ -125,7 +125,7 @@ const ScheduleBosses = ({ control }: { control: any }) => {
                   label="Chức vụ"
                   name={`scheduleBosses.${index}.position`}
                   layout="horizontal"
-                  labelWidth="w-1/4"
+                  labelWidth="col-span-4"
                 />
               </div>
             </div>
@@ -144,7 +144,7 @@ const AddEditLichLamViec = ({ dataSource }: any) => {
 
   return (
     <div className="p-2 space-y-2">
-      <h5 className="text-lg font-semibold text-blue-600 mb-3">Thông tin chung</h5>
+      <h5 className="text-lg font-semibold text-blue-700 mb-3">Thông tin chung</h5>
       <div className="grid grid-cols-12 gap-x-5 gap-y-2">
         <div className="col-span-12">
           <Textbox
@@ -152,7 +152,8 @@ const AddEditLichLamViec = ({ dataSource }: any) => {
             name="title"
             rules={REQUIRED}
             layout="horizontal"
-            labelWidth="w-[12%]"
+            labelWidth="col-span-2"
+            inputWidth="col-span-10"
           />
         </div>
         <div className="col-span-12 md:col-span-6">
@@ -163,7 +164,7 @@ const AddEditLichLamViec = ({ dataSource }: any) => {
             rules={REQUIRED}
             placeholder="- Chọn -"
             layout="horizontal"
-            labelWidth="w-[24%]"
+            labelWidth="col-span-4"
           />
         </div>
         <div className="col-span-12 md:col-span-6">
@@ -172,7 +173,7 @@ const AddEditLichLamViec = ({ dataSource }: any) => {
             name="date"
             rules={REQUIRED}
             layout="horizontal"
-            labelWidth="w-[24%]"
+            labelWidth="col-span-4"
           />
         </div>
       </div>

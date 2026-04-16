@@ -10,7 +10,11 @@ import cacheService from "@/services/cache.service";
 import proxyService from "@/services/proxy/proxy.service";
 import tokenService from "@/services/token.service";
 import utilsService from "@/services/utils/utils.service";
-import { AES_IV, LOCAL_STORAGE_USER_INFO, USER_ROLE } from "@/constants/auth.enum";
+import {
+  AES_IV,
+  LOCAL_STORAGE_USER_INFO,
+  USER_ROLE,
+} from "@/constants/auth.enum";
 import { dispatchLogout } from "@/services/auth/auth-sso.service";
 
 interface UserInfo {
@@ -70,14 +74,14 @@ export default function AdminHeader({
         tokenService.storeToken(result.accessToken);
 
         const tokenDecode = decodeURIComponent(
-          escape(utilsService.base64ToArray(result.accessToken?.split(".")[1]))
+          escape(utilsService.base64ToArray(result.accessToken?.split(".")[1])),
         );
         const tokenJson = JSON.parse(tokenDecode) as Record<string, unknown>;
         tokenJson.userId = result.userId || "";
         utilsService.setUserInfo(tokenJson);
         cacheService.set(
           USER_ROLE,
-          utilsService.encryptAES(JSON.stringify(result.roles), AES_IV)
+          utilsService.encryptAES(JSON.stringify(result.roles), AES_IV),
         );
 
         window.location.href = "/quan-tri/system/users";
@@ -91,33 +95,10 @@ export default function AdminHeader({
     <header className="admin-header-shell h-16 flex items-center justify-between px-4 md:px-6 lg:px-8 sticky top-0 z-30">
       {/* Left Section */}
       <div className="admin-header-left flex items-center gap-3 md:gap-5 min-w-0">
-        {onMobileMenuOpen && (
-          <Button
-            isIconOnly
-            size="sm"
-            variant="outline"
-            onPress={onMobileMenuOpen}
-            aria-label="Open menu"
-            className="admin-header-action-btn border-slate-300/80 bg-white/70 lg:hidden"
-          >
-            <i className="fas fa-bars text-lg" />
-          </Button>
-        )}
-
-        {onDesktopMenuToggle && (
-          <Button
-            isIconOnly
-            size="sm"
-            variant="outline"
-            onPress={onDesktopMenuToggle}
-            aria-label="Toggle sidebar"
-            className="admin-header-action-btn hidden lg:inline-flex border-slate-300/80 bg-white/70"
-          >
-            <i className={`fas ${isSidebarCollapsed ? "fa-angles-right" : "fa-angles-left"} text-sm`} />
-          </Button>
-        )}
-
-        <Link href="/quan-tri" className="admin-header-brand flex items-center gap-3 md:gap-4 min-w-0">
+        <Link
+          href="/quan-tri"
+          className="admin-header-brand flex items-center gap-3 md:gap-4 min-w-0"
+        >
           <div className="admin-header-logo relative w-10 h-10 md:w-11 md:h-11 flex items-center justify-center shrink-0">
             <Image
               src="/layout/images/logo.png"
@@ -140,7 +121,7 @@ export default function AdminHeader({
         <Button
           size="sm"
           variant="outline"
-          className="admin-header-action-btn hidden md:flex border-slate-300/80 bg-white/70"
+          className="hidden md:flex h-9 px-3 bg-slate-100 hover:bg-slate-200"
           onPress={() => window.open("/", "_blank")}
         >
           <i className="fas fa-home text-sm" />
@@ -149,19 +130,19 @@ export default function AdminHeader({
 
         <Dropdown>
           <Dropdown.Trigger>
-            <span
-              role="button"
-              tabIndex={0}
-              className="admin-header-action-btn admin-header-user-trigger inline-flex min-h-9 items-center gap-2 rounded-full border border-slate-300/80 bg-white/70 px-2.5 text-sm"
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 px-3 bg-slate-100 hover:bg-slate-200"
             >
-              <span className="text-xs font-semibold hidden lg:block text-slate-700">
+              <span className="inline-flex items-center justify-center text-slate-600">
+                <i className="fas fa-user text-sm" />
+              </span>
+              <span className="text-sm hidden lg:inline">
                 {userInfo?.firstName || "Quản trị viên"}
               </span>
-              <span className="admin-header-avatar inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-600">
-                <i className="fas fa-user text-xs" />
-              </span>
-              <i className="fas fa-chevron-down text-[10px] text-slate-500" />
-            </span>
+              <i className="fas fa-chevron-down text-[10px]" />
+            </Button>
           </Dropdown.Trigger>
 
           <Dropdown.Popover placement="bottom end">
@@ -191,7 +172,11 @@ export default function AdminHeader({
                 </Dropdown.Item>
               )}
 
-              <Dropdown.Item id="logout" textValue="Đăng xuất" className="text-red-600">
+              <Dropdown.Item
+                id="logout"
+                textValue="Đăng xuất"
+                className="text-red-600"
+              >
                 <div className="flex items-center gap-2 text-red-600">
                   <i className="fas fa-sign-out-alt" />
                   <span className="font-medium">Đăng xuất</span>

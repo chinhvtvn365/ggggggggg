@@ -252,6 +252,7 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
         return (
           <div key={idx} title={(item.tooltip || item.label) as string}>
             <Button
+              className={(item.className as string) || ""}
               isDisabled={btnDisabled as boolean}
               variant={
                 item.color === "danger"
@@ -311,7 +312,7 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
             <Modal.Dialog>
               <Modal.CloseTrigger />
               <Modal.Header>
-                <Modal.Heading>Xác nhận xóa</Modal.Heading>
+                <Modal.Heading className="font-semibold">Xác nhận xóa</Modal.Heading>
               </Modal.Header>
               <Modal.Body>
                 <p>
@@ -319,10 +320,12 @@ const CrudButtons: React.FC<CrudButtonsProps> = ({
                 </p>
               </Modal.Body>
               <Modal.Footer>
-                <Button variant="outline" onPress={closeDeleteModal}>
+                <Button variant="tertiary" onPress={closeDeleteModal}>
+                  <i className="fas fa-times" />
                   Đóng
                 </Button>
                 <Button variant="danger" onPress={() => handleDeleteSelected(closeDeleteModal)}>
+                  <i className="fas fa-trash-alt" />
                   Xóa
                 </Button>
               </Modal.Footer>

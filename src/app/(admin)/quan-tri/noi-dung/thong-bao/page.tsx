@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import moment from "moment";
 import Image from "next/image";
-import { Card } from "@heroui/react";
 import DataTable from "@/components/layouts/admin/commons/table/DataTable";
 import AddEditTinTucBaiViet from "@/components/tin-tuc-bai-viet/AddEditTinTucBaiViet";
 import proxyService from "@/services/proxy/proxy.service";
@@ -212,7 +211,7 @@ const Page = () => {
           dataFormatEdit: (row: NewsItem) => (
             <div className="min-w-[200px]">
               <div
-                className="text-sm font-medium text-[#111827] whitespace-normal break-words"
+                className="text-sm font-medium whitespace-normal break-words"
                 style={{ lineHeight: "1.5" }}
               >
                 {row.tieuDe}
@@ -230,8 +229,8 @@ const Page = () => {
         {
           name: "Nội dung tóm tắt",
           dataField: "noiDungTomTat",
-          dataFormatEdit: (row: NewsItem) => (
-            <div className="line-clamp-2 text-sm text-slate-500 break-words">
+          dataFormat: (row: NewsItem) => (
+            <div className="line-clamp-2 break-words">
               {row.noiDungTomTat || "Chưa có nội dung tóm tắt"}
             </div>
           ),
@@ -260,7 +259,7 @@ const Page = () => {
           name: "Ngày xuất bản",
           dataField: "ngayXuatBan",
           width: "110px",
-          dataFormatEdit: (row: NewsItem) => {
+          dataFormat: (row: NewsItem) => {
             const nguoiThucHien = row?.tenNguoiTao;
             return (
               <div style={{ color: "#666" }}>
@@ -291,7 +290,7 @@ const Page = () => {
                   </div>
                 )}
                 {ngayHienThi && (
-                  <div style={{ color: "#999" }}>
+                  <div>
                     {moment(ngayHienThi).format("DD/MM/YY HH:mm")}
                   </div>
                 )}
@@ -310,7 +309,7 @@ const Page = () => {
               <span className={data.isActive
                 ? "inline-flex w-fit items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700"
                 : "inline-flex w-fit items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600"}>
-                {data.isActive ? "Đã xuất bản" : "Chờ xử lý"}
+                {data.isActive ? "Xuất bản" : "Chờ xử lý"}
               </span>
               <div className="flex flex-row flex-wrap gap-1">
                 {data.mucDoUuTien === 1 && (
@@ -341,7 +340,7 @@ const Page = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-gray-400 text-[12px] font-medium hover:bg-blue-50 hover:text-blue-600 transition-all"
+                className="inline-flex items-center gap-1.5 h-8 px-2.5"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"/><path d="m21 3-9 9"/><path d="M15 3h6v6"/></svg>
                 Xem
@@ -372,6 +371,7 @@ const Page = () => {
         active: true,
         permission: "NewsContent.Default.Create",
         api: "/api/app/tin-tuc-bai-viet",
+        style: { width: "1000px" },
         uiConfigs: { headerText: "Thêm thông báo mới" },
         component: AddEditTinTucBaiViet,
         transform2BE: createDataForm,
@@ -381,6 +381,7 @@ const Page = () => {
         active: true,
         permission: "NewsContent.Default.Update",
         api: "/api/app/tin-tuc-bai-viet",
+        style: { width: "1000px" },
         uiConfigs: { headerText: "Cập nhật thông báo" },
         component: AddEditTinTucBaiViet,
         transform2BE: createDataForm,
@@ -395,11 +396,7 @@ const Page = () => {
 
   return (
     <div className="">
-      <Card className="border border-default-200 overflow-hidden">
-        <div className="p-0 overflow-hidden">
-          <DataTable metadata={metadata} />
-        </div>
-      </Card>
+      <DataTable metadata={metadata} />
     </div>
   );
 };

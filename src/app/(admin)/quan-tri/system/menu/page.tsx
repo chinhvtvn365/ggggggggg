@@ -2,12 +2,9 @@
 
 import React, { Fragment, useEffect, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { Card } from "@heroui/react";
 import DataTable from "@/components/layouts/admin/commons/table/DataTable";
+import AddEdit from "@/components/system/menu/AddEdit";
 import { proxyService } from "@/services";
-
-// Lazy load component
-const AddEdit = React.lazy(() => import("@/components/system/menu/AddEdit"));
 
 interface AssignableRole {
   id: string;
@@ -185,16 +182,21 @@ const Page = () => {
                 )}
 
                 {level === 0 ? (
-                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-100 text-blue-700 shadow-sm">
-                    <i className="fa-regular fa-folder-open text-base" />
+                  <span>
                   </span>
                 ) : (
                   <i className="fa-solid fa-chevron-right text-slate-400 text-[10px] w-4 text-center" />
                 )}
 
+                {row.iconClass ? (
+                  <i className={`${row.iconClass} text-blue-600 text-[14px] w-4 text-center`} />
+                ) : (
+                  <span className="w-4" aria-hidden="true" />
+                )}
+
                 <span
-                  className={`text-[#2563EB] font-semibold ${
-                    level === 0 ? "uppercase tracking-wide font-admin-heading" : ""
+                  className={`${
+                    level === 0 ? "font-bold tracking-wide font-admin-heading" : ""
                   }`}
                 >
                   {row.name}
@@ -252,7 +254,7 @@ const Page = () => {
           dataFormat: (row: any) => (
             <div className="text-center">
               {row.isActive ? (
-                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white border border-slate-200 shadow-sm">
+                <span className="inline-flex items-center justify-center w-6 h-6">
                   <i className="fa-solid fa-check text-emerald-500 text-sm" />
                 </span>
               ) : null}
@@ -302,8 +304,8 @@ const Page = () => {
         permission: "MenuManagement.Default.Create",
         uiConfigs: { 
           headerText: "Thêm menu",
-          modalWidth: ""
         },
+        style: { width: "1000px" },
         dataSource: { roles, postisionMenu, groupMenu, functionMenu },
         component: AddEdit,
         transform2BE: (data: any) => createDataForm(data),
@@ -314,8 +316,8 @@ const Page = () => {
         permission: "MenuManagement.Default.Update",
         uiConfigs: { 
           headerText: "Cập nhật menu",
-          modalWidth: ""
         },
+        style: { width: "1000px" },
         dataSource: { roles, postisionMenu, groupMenu, functionMenu },
         component: AddEdit,
         transform2BE: (data: any) => createDataForm(data),
@@ -353,7 +355,8 @@ const Page = () => {
         },
         {
           label: "Cập nhật thứ tự",
-          color: "primary",
+          color: "secondary",
+          className: "purpose",
           icon: "fa-solid fa-floppy-disk",
           permission: "MenuManagement.Default.Update",
           requiresSelection: false,
@@ -387,13 +390,9 @@ const Page = () => {
     <div className="">
       {roles.length > 0 && (
         <FormProvider {...methods}>
-          <Card className="border border-default-200 overflow-hidden">
-            <div className="p-0 overflow-hidden">
-              <DataTable
-                metadata={metadata}
-              />
-            </div>
-          </Card>
+          <DataTable
+            metadata={metadata}
+          />
         </FormProvider>
       )}
     </div>

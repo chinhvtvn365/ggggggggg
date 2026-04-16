@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { DATATABLE_MODAL_UPDATE_MODE } from "@/constants/datatable.enum";
 import { proxyService } from "@/services";
 import { updateAdditionalTotalRows } from "@/lib/features/datatable/datatableSlice";
+import { open, close } from "@/lib/features/loading/loadingSlice";
 import fileSubmitHandler from "./FileSubmitHandler";
 
 // --- INTERFACES ---
@@ -48,6 +49,7 @@ const UpdateModal: React.FC<UpdateModalProps> = (props) => {
     transform2BE,
     handleResponseData,
     className,
+    style,
     toggle,
     isOpen,
     metadata,
@@ -56,11 +58,17 @@ const UpdateModal: React.FC<UpdateModalProps> = (props) => {
     customFooter = null,
   } = props;
 
+  const resolvedModalMaxWidth =
+    uiConfigs?.modalWidth ||
+    (typeof style?.width === "string" ? style.width : undefined) ||
+    "50vw";
+
   // --- REDUX ---
   const dispatch = useAppDispatch();
   const datatableReducer = useAppSelector((state) => state.datatableReducer);
 
   // --- FORM STATE ---
+  const [submitting, setSubmitting] = useState(false);
   const [formConfigs, setFormConfigs] = useState({});
 
   // Build defaultValues from data to ensure all inputs start as controlled (not undefined)
@@ -132,6 +140,8 @@ const UpdateModal: React.FC<UpdateModalProps> = (props) => {
 
   // --- ACTIONS ---
   const onSubmit = async (formData: any) => {
+    setSubmitting(true);
+    dispatch(open());
     let finalData = { ...formData };
 
     if (isSubmitFile) {
@@ -139,12 +149,18 @@ const UpdateModal: React.FC<UpdateModalProps> = (props) => {
         finalData = await fileSubmitHandler(finalData, true);
       } catch (ex) {
         console.error("File upload error:", ex);
+        setSubmitting(false);
+        dispatch(close());
         return;
       }
     }
 
     const payload = typeof transform2BE === "function" ? await transform2BE(finalData) : finalData;
-    if (!payload) return;
+    if (!payload) {
+      setSubmitting(false);
+      dispatch(close());
+      return;
+    }
 
     try {
       const result = await proxyService.put(`${api}/${finalData.id}`, payload, headers);
@@ -164,6 +180,9 @@ const UpdateModal: React.FC<UpdateModalProps> = (props) => {
       }
     } catch (err: any) {
       console.error("Update API Error:", err);
+    } finally {
+      setSubmitting(false);
+      dispatch(close());
     }
   };
 
@@ -174,15 +193,22 @@ const UpdateModal: React.FC<UpdateModalProps> = (props) => {
     >
       <Modal.Backdrop>
         <Modal.Container placement="top">
-          <Modal.Dialog style={{ maxWidth: uiConfigs?.modalWidth || "960px", maxHeight: "88vh" }}>
+          <Modal.Dialog
+            className="admin-form-modal-dialog"
+            style={{
+              maxWidth: resolvedModalMaxWidth,
+              maxHeight: "95vh",
+              ...style,
+            }}
+          >
             <Modal.CloseTrigger />
-            <Modal.Header>
+            <Modal.Header className="admin-form-modal-header">
               <Modal.Heading>
                 {uiConfigs?.headerText || "Cập nhật dữ liệu"}
               </Modal.Heading>
             </Modal.Header>
 
-            <Modal.Body>
+            <Modal.Body className="admin-form-modal-body">
           <FormProvider {...extendedMethods}>
             <form id="update-modal-form" className={className} onSubmit={handleSubmit(onSubmit)}>
               {React.createElement(component, {
@@ -196,7 +222,7 @@ const UpdateModal: React.FC<UpdateModalProps> = (props) => {
           </FormProvider>
             </Modal.Body>
 
-            <Modal.Footer>
+            <Modal.Footer className="admin-form-modal-footer">
           {/* Custom Footer Logic */}
           {customFooter && (
             <div>
@@ -265,17 +291,21 @@ const UpdateModal: React.FC<UpdateModalProps> = (props) => {
           <div className="ml-auto flex items-center gap-2">
             {!data?.disabled && (
               <Button
+                size="md"
                 type="submit"
                 form="update-modal-form"
                 variant="primary"
+                isDisabled={submitting}
               >
-                <i className="fas fa-save mr-1" />
+                <i className={`fas mr-1 ${submitting ? "fa-spinner fa-spin" : "fa-save"}`} />
                 Lưu
               </Button>
             )}
             <Button
+              size="md"
               type="button"
-              variant="outline"
+              variant="tertiary"
+              isDisabled={submitting}
               onPress={toggle}
             >
               <i className="fas fa-times mr-1" />

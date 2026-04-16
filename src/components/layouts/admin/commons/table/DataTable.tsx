@@ -9,7 +9,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from "react";
-import { Button, Modal, Chip, Table, Pagination } from "@heroui/react";
+import { Button, Modal, Chip, Table, Pagination, Card } from "@heroui/react";
 import { useFormContext } from "react-hook-form";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 
@@ -290,6 +290,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
 
     const rowCellPaddingY =
       tableStyles?.rowSpacing === "comfortable" ? "py-3" : "py-2.5";
+    const multiSelectColWidth = 36;
 
     const getDataColumnPhysicalIndex = (colIdx: number): number =>
       colIdx + (isMultiDeleteEnabled ? 1 : 0) + (rowExpansion ? 1 : 0);
@@ -324,7 +325,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
 
       for (let idx = 0; idx < physicalIndex; idx++) {
         if (isMultiDeleteEnabled && idx === 0) {
-          left += 44;
+          left += multiSelectColWidth;
           continue;
         }
 
@@ -361,8 +362,9 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
           left: getStickyLeftOffset(physicalIndex),
           ...(isMultiDeleteEnabled && physicalIndex === 0
             ? {
-                minWidth: 44,
-                width: 44,
+                minWidth: multiSelectColWidth,
+                width: multiSelectColWidth,
+                maxWidth: multiSelectColWidth,
               }
             : {}),
           ...(isLastSticky
@@ -871,7 +873,10 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
               ))}
               {selected && selected.length > 0 && (
                 <Chip variant="primary" color="warning" size="sm" className="text-white font-semibold px-2.5 py-1">
-                  Đã chọn: {selected.length}
+                  <span className="inline-flex items-center gap-1.5">
+                    <i className="fa-solid fa-check text-[11px]" />
+                    Đã chọn: {selected.length}
+                  </span>
                 </Chip>
               )}
             </>
@@ -905,7 +910,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                 : (datatableReducer.totalRows ?? 0),
             )}
           <div
-            className={`admin-table-header flex flex-wrap items-center justify-between gap-3 mb-3 ${
+            className={`admin-table-header flex flex-wrap items-center justify-between gap-3 mb-1 ${
               filterToolsCfg?.smallMode ? "p-2" : ""
             }`}
           >
@@ -983,7 +988,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                   rowExpansion.isDeletable &&
                   (!crudButtons.delete.permission ||
                     (crudButtons.delete.permission as string) in granted) && (
-                    <th className="px-4 py-2 w-12 capitalize bg-slate-50">
+                    <th className="px-4 py-2 w-12 capitalize bg-[#0f6bbf] text-white border-b border-[#0a4d8a]">
                       <input
                         type="checkbox"
                         className="w-4 h-4 cursor-pointer"
@@ -1019,7 +1024,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                 {rowExpansion.columns.map((col) => (
                   <th
                     key={col.name}
-                    className="px-4 py-2 text-left text-[14px] font-bold text-slate-700"
+                    className="px-3 py-2 text-left text-[12px] font-semibold tracking-[0.015em] text-white bg-[#0f6bbf] border-b border-[#0a4d8a]"
                     style={col.style}
                   >
                     {col.name}
@@ -1031,14 +1036,14 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
               {nestedRows.map((nestedRow, idx) => (
                 <tr
                   key={(nestedRow.id as string) || idx}
-                  className="border-b hover:bg-gray-50"
+                  className="border-b border-slate-300/80 hover:bg-slate-100/70"
                 >
                   {crudButtons.delete.active &&
                     isMultiDeleteType &&
                     rowExpansion.isDeletable &&
                     (!crudButtons.delete.permission ||
                       (crudButtons.delete.permission as string) in granted) && (
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-2 bg-slate-50 border-r border-slate-300/80">
                         <input
                           type="checkbox"
                           className="w-4 h-4 cursor-pointer"
@@ -1054,7 +1059,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                       </td>
                     )}
                   {rowExpansion.columns.map((col) => (
-                    <td key={col.name} className="px-4 py-2" style={col.style}>
+                    <td key={col.name} className="px-4 py-2 bg-slate-50 border-r border-slate-300/80" style={col.style}>
                       {col.dataFormatEdit &&
                       typeof col.dataFormatEdit === "function" &&
                       (!crudButtons.update.permission ||
@@ -1063,7 +1068,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                         !readOnly ? (
                           <a
                             href="#"
-                            className="text-blue-600 hover:underline"
+                            className="text-blue-700 hover:underline"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -1204,16 +1209,16 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
           );
         }
 
-        const stripedClass = rowIndex % 2 === 0 ? "bg-sky-50/35" : "bg-white";
+        const stripedClass = (rowIndex + 1) % 2 === 0 ? "bg-white" : "bg-slate-100";
         const rowCls = `group border-b border-slate-300/80 ${getRowClassName(item)}`;
-        const cellBgClass = `${stripedClass} group-hover:!bg-cyan-50/60`;
+        const cellBgClass = `${stripedClass} group-hover:!bg-slate-100`;
 
         rows.push(
           <Table.Row key={(item.id as string) || rowIndex} className={rowCls}>
             {/* Multi-delete checkbox */}
             {isMultiDeleteEnabled && (
                 <Table.Cell
-                  className={`${cellBgClass} border-r border-slate-300/80 px-3 ${rowCellPaddingY} ${
+                  className={`${cellBgClass} border-r border-slate-300/80 px-2 ${rowCellPaddingY} ${
                     getStickyStyles(
                       0,
                       false,
@@ -1221,6 +1226,9 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                     ).className
                   }`}
                   style={{
+                    minWidth: multiSelectColWidth,
+                    width: multiSelectColWidth,
+                    maxWidth: multiSelectColWidth,
                     ...getStickyStyles(0, false, stripedClass).style,
                   }}
                 >
@@ -1311,7 +1319,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                   !readOnly ? (
                     <a
                       href="#"
-                      className="inline-flex items-center px-2 rounded-md text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/60 transition-colors font-medium"
+                      className="inline-flex items-center px-2 rounded-md text-sm text-blue-700 hover:text-blue-700 transition-colors font-medium"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -1369,7 +1377,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                           isIconOnly
                           size="sm"
                           variant="secondary"
-                          className="bg-blue-50 text-blue-700 hover:bg-blue-100"
+                          className="bg-blue-100 text-blue-700 hover:bg-blue-100"
                           aria-label="Chỉnh sửa"
                           onPress={() => {
                             if (
@@ -1447,8 +1455,13 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
       <>
         {isMultiDeleteEnabled && (
             <Table.Column
-              className={`sticky top-0 z-20 border-r border-slate-300/80 px-3 py-3 ${getStickyStyles(0, true, "bg-white").className}`}
-              style={{ ...getStickyStyles(0, true, "bg-white").style }}
+              className={`sticky top-0 z-20 border-r border-slate-300/80 px-2 py-2.5 ${getStickyStyles(0, true, "bg-sky-100").className}`}
+              style={{
+                minWidth: multiSelectColWidth,
+                width: multiSelectColWidth,
+                maxWidth: multiSelectColWidth,
+                ...getStickyStyles(0, true, "bg-white").style,
+              }}
             >
               <input
                 type="checkbox"
@@ -1490,8 +1503,8 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
 
         {rowExpansion && (
           <Table.Column
-            className={`border-r border-slate-300/80 px-3 py-3 w-10 ${
-              getStickyStyles(isMultiDeleteEnabled ? 1 : 0, true, "bg-white")
+            className={`border-r border-slate-300/80 px-3 py-2.5 w-10 ${
+              getStickyStyles(isMultiDeleteEnabled ? 1 : 0, true, "bg-sky-100")
                 .className
             }`}
             style={{
@@ -1507,8 +1520,8 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
         {columns.map((col, colIdx) => (
           <Table.Column
             key={col.name}
-            className={`sticky top-0 z-20 border-r border-slate-300/80 px-2 py-3 text-[14px] font-bold text-slate-800 whitespace-nowrap ${
-              getStickyStyles(getDataColumnPhysicalIndex(colIdx), true, "bg-slate-50")
+            className={`sticky top-0 z-20 border-r border-slate-300/80 px-2 py-2.5 text-[12px] font-semibold tracking-[0.01em] text-slate-800 whitespace-nowrap ${
+              getStickyStyles(getDataColumnPhysicalIndex(colIdx), true, "bg-sky-100")
                 .className
             } ${
               col.alignHeader === "center"
@@ -1522,7 +1535,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
               ...getStickyStyles(
                 getDataColumnPhysicalIndex(colIdx),
                 true,
-                "bg-slate-50",
+                "bg-sky-100",
               ).style,
               ...col.style,
             }}
@@ -1535,20 +1548,20 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
           hasEditableColumn(columns) &&
           isAuthReady && (
             <Table.Column
-              style={{ minWidth: "85px" }}
-              className={`sticky top-0 z-20 border-r border-slate-300/80 px-2 py-3 text-[14px] font-bold text-slate-800 whitespace-nowrap text-center`}
+              style={{ minWidth: "40px", width: "40px" }}
+              className={`sticky top-0 z-20 border-r border-slate-300/80 px-2 py-2.5 text-[12px] font-semibold tracking-[0.01em] text-slate-800 whitespace-nowrap text-center bg-sky-100`}
             >
-              Thao tác
+              
             </Table.Column>
           )}
         {crudButtons.delete.active &&
           crudButtons.delete.type === DELETE_TYPE_SINGLE &&
           isAuthReady && (
             <Table.Column
-              style={{ minWidth: "85px" }}
-              className={`sticky top-0 z-20 border-r border-slate-300/80 px-2 py-3 text-[14px] font-bold text-slate-800 whitespace-nowrap text-center`}
+              style={{ minWidth: "40px", width: "40px" }}
+              className={`sticky top-0 z-20 border-r border-slate-300/80 px-2 py-2.5 text-[12px] font-semibold tracking-[0.01em] text-slate-800 whitespace-nowrap text-center bg-sky-100`}
             >
-              Thao tác
+              
             </Table.Column>
           )}
       </>
@@ -1673,70 +1686,73 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
 
     return (
       <Fragment>
-        <div className="datatable-wrapper admin-datatable-shell">
-          <div className="datatable-toolbar">
-            <CrudButtons
-              className=""
-              metadata={metadata}
-              data={dataBinding}
-              setHasChangeData={setHasChangeData}
-              setBack={setDataBinding}
-              selected={selected}
-              setSelected={(val) => setSelected(val ?? [])}
-              granted={granted}
-            />
-          </div>
-          <div className="admin-table-content-wrap">
-            {topTableCustom && <>{topTableCustom()}</>}
+        <Card className="border border-default-200 overflow-hidden rounded-xl">
+          <div className="p-0 overflow-hidden">
+            <div className="datatable-wrapper admin-datatable-shell">
+              <div className="datatable-toolbar">
+                <CrudButtons
+                  className=""
+                  metadata={metadata}
+                  data={dataBinding}
+                  setHasChangeData={setHasChangeData}
+                  setBack={setDataBinding}
+                  selected={selected}
+                  setSelected={(val) => setSelected(val ?? [])}
+                  granted={granted}
+                />
+              </div>
+              <div className="admin-table-content-wrap">
+                {topTableCustom && <>{topTableCustom()}</>}
 
-            {renderHeader()}
+                {renderHeader()}
 
-            <div
-              className={`admin-table-surface admin-table-scroll overflow-x-auto bg-white font-admin-table ${
-                tableStyles?.className || ""
-              }`}
-            >
-              <div className="admin-table-sheen" aria-hidden />
-              <Table
-                className={`admin-table-grid w-full text-sm text-left ${
-                  tableStyles?.showGridlines ? "border-collapse" : ""
-                }`}
-              >
-                <Table.Content aria-label="DataTable">
-                  {headerColumnGroup ? (
-                    <Table.Header>{headerColumnGroup as React.ReactNode}</Table.Header>
-                  ) : (
-                    <Table.Header>{renderHeaderColumns()}</Table.Header>
-                  )}
-                  <Table.Body>
-                  {sortedDataBinding.length === 0 ? (
-                    <Table.Row>
-                      <Table.Cell
-                        colSpan={getTotalColCount()}
-                        className="px-4 py-12 text-center text-xs text-slate-500 bg-slate-50/30"
-                      >
-                        <div className="flex flex-col items-center gap-3">
-                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-slate-100 to-blue-50 flex items-center justify-center">
-                            <i className="fas fa-inbox text-3xl text-slate-300" />
-                          </div>
-                       
-                          <p className="text-xs text-slate-400">
-                            Không tìm thấy dữ liệu nào
-                          </p>
-                        </div>
-                      </Table.Cell>
-                    </Table.Row>
-                  ) : (
-                    renderTableRows()
-                  )}
-                  </Table.Body>
-                </Table.Content>
-              </Table>
+                <div
+                  className={`admin-table-surface admin-table-scroll overflow-x-auto ${
+                    tableStyles?.className || ""
+                  }`}
+                >
+                  <Table
+                    className={`admin-table-grid w-full text-sm text-left p-0 rounded-md ${
+                      tableStyles?.showGridlines ? "border-collapse" : ""
+                    }`}
+                  >
+                    <Table.Content aria-label="DataTable">
+                      {headerColumnGroup ? (
+                        <Table.Header>{headerColumnGroup as React.ReactNode}</Table.Header>
+                      ) : (
+                        <Table.Header>{renderHeaderColumns()}</Table.Header>
+                      )}
+                      <Table.Body>
+                      {sortedDataBinding.length === 0 ? (
+                        <Table.Row>
+                          <Table.Cell
+                            colSpan={getTotalColCount()}
+                            className="px-4 py-12 text-center text-xs text-slate-500 bg-slate-50/30"
+                          >
+                            <div className="flex flex-col items-center gap-3">
+                              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-slate-100 to-blue-50 flex items-center justify-center">
+                                <i className="fas fa-inbox text-3xl text-slate-300" />
+                              </div>
+                            
+                              <p className="text-xs text-slate-400">
+                                Không tìm thấy dữ liệu nào
+                              </p>
+                            </div>
+                          </Table.Cell>
+                        </Table.Row>
+                      ) : (
+                        renderTableRows()
+                      )}
+                      </Table.Body>
+                    </Table.Content>
+                  </Table>
 
-              {renderPagination()}
+                  {renderPagination()}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* ── UpdateModal ── */}
         {modal &&
@@ -1876,7 +1892,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                     <div className="flex items-center justify-center w-12 h-12 rounded-full">
                       <i className="fas fa-exclamation-triangle text-xl text-orange-500" />
                     </div>
-                    <Modal.Heading>
+                    <Modal.Heading className="font-semibold">
                       Xác nhận xóa
                     </Modal.Heading>
                   </div>
@@ -1896,7 +1912,7 @@ const DataTableComponent = forwardRef<DataTableRef, DataTableProps>(
                     <i className="fas fa-trash-alt" /> Xóa
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="tertiary"
                     onPress={() => setDeleteDialog(false)}
                   >
                     <i className="fas fa-times" /> Đóng

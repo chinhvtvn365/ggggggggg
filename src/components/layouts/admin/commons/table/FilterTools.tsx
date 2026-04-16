@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import { DatePicker, Dropdown, Switch, Input, Button } from "@heroui/react";
+import { DatePicker, Dropdown, Switch, SearchField, Button } from "@heroui/react";
 import { parseDate, fromDate, getLocalTimeZone, toCalendarDate } from "@internationalized/date";
 import { useAppDispatch } from "@/lib/hooks";
 import { useDebouncedCallback } from "use-debounce";
@@ -200,14 +200,10 @@ const FilterTools: React.FC<FilterToolsProps> = ({
           <div key={comp.name + idx} className={cn("", comp.width || "")}>
             <Dropdown>
               <Dropdown.Trigger>
-                <span
-                  role="button"
-                  tabIndex={0}
-                  className="inline-flex min-h-9 items-center gap-2 rounded-medium bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-700"
-                >
+                <Button variant="tertiary" size="md" className="bg-gray-200">
                   {selectedItem?.label || comp.placeholder || "-- Chọn --"}
                   <i className="fas fa-chevron-down" />
-                </span>
+                </Button>
               </Dropdown.Trigger>
               <Dropdown.Popover placement="bottom start">
                 <Dropdown.Menu
@@ -299,38 +295,28 @@ const FilterTools: React.FC<FilterToolsProps> = ({
       <div className={rowClass}>
         {renderComponentTemplate(false)}
         {inputPlaceholder && (
-          <div className={cn("admin-filtertools-search flex items-center gap-2", inputWidth || "")}>
-            <span className="admin-filtertools-search-icon inline-flex items-center justify-center text-slate-500">
-              <i className="fas fa-search" />
-            </span>
-            <Input
-              type="text"
-              variant="secondary"
-              placeholder={inputPlaceholder}
+          <div className={cn("admin-filtertools-search", inputWidth || "")}>
+            <SearchField
+              aria-label={inputPlaceholder}
               value={inputSearch}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                const value = e.target.value;
+              onChange={(value: string) => {
                 setInputSearch(value);
                 debouncedSearch(value);
               }}
-              className="h-9"
-            />
+            >
+              <SearchField.Group>
+                <SearchField.SearchIcon />
+                <SearchField.Input placeholder={inputPlaceholder} />
+                <SearchField.ClearButton />
+              </SearchField.Group>
+            </SearchField>
           </div>
         )}
-        <Button
-          isIconOnly
-          variant={isShowCustomizedFilter ? "primary" : "secondary"}
-          size="md"
-          className="admin-filtertools-icon-btn"
-          onPress={() => setIsShowCustomizedFilter(!isShowCustomizedFilter)}
-        >
-          <i className="fas fa-filter" />
-        </Button>
+       
         <Button
           isIconOnly
           variant="primary"
           size="md"
-          className="admin-filtertools-refresh-btn bg-slate-700 text-white hover:bg-slate-800"
           onPress={refresh}
         >
           <i className="fas fa-sync-alt" />

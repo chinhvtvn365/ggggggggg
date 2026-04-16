@@ -80,7 +80,7 @@ export default function AdminLayout({
           onMobileMenuOpen={openMobileSidebar}
         />
 
-        <main className="admin-layout-main flex-1 overflow-y-auto w-full px-3 py-3 md:px-5 md:py-4 lg:px-6 lg:py-5">
+        <main className="admin-layout-main flex-1 overflow-y-auto w-full px-3 py-3 md:px-3 md:py-3">
           <div className="admin-breadcrumb-bar flex items-center justify-between gap-3">
             <div className="min-w-0">
               {breadcrumbsData.length > 0 && (

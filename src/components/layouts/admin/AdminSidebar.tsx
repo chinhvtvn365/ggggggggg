@@ -119,7 +119,7 @@ export default function AdminSidebar({ setBreadcrumbsData, setUserInfo: setParen
   }, [model, pathname, setBreadcrumbsData]);
 
   return (
-    <aside className="admin-sidebar-shell w-[268px] flex flex-col overflow-hidden relative z-20">
+    <aside className="admin-sidebar-shell w-[240px] flex flex-col overflow-hidden relative z-20">
       <div className="admin-sidebar-ambient" aria-hidden />
       <div className="admin-sidebar-scroll flex-1 overflow-y-auto p-0 rounded-none relative transition-all scroll-smooth">
         <div className="admin-sidebar-panel">

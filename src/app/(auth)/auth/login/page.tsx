@@ -123,10 +123,10 @@ export default function LoginPage() {
         <div className="card-header">
           <div className="card-logo">
             <Image
-              src="/layout/images/quochuy.png"
-              width={80}
-              height={80}
-              alt="Quốc huy Việt Nam"
+              src="/layout/images/logo.png"
+              width={56}
+              height={56}
+              alt="Logo"
               priority
             />
           </div>
@@ -287,14 +287,14 @@ export default function LoginPage() {
             <i className="pi pi-shield" />
             Đăng nhập SSO
           </button>
-          <button
+          {/* <button
             type="button"
             className="btn-sso btn-sso-logout"
             onClick={() => dispatchLogout()}
           >
             <i className="pi pi-sign-out" />
             Thoát tài khoản SSO
-          </button>
+          </button> */}
         </div>
 
         {/* Footer */}

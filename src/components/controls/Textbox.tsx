@@ -57,8 +57,8 @@ const Textbox: React.FC<TextboxProps> = (props) => {
     maxLength = 500,
     minLength = 0,
     layout = "vertical",
-    labelWidth = "w-1/4",
-    inputWidth = "w-full",
+    labelWidth = "",
+    inputWidth = "",
     labelStyle = {},
     minValue,
     maxValue,
@@ -73,6 +73,19 @@ const Textbox: React.FC<TextboxProps> = (props) => {
   const methods = useFormContext();
 
   const isHorizontal = layout === "horizontal";
+  const resolvedLabelWidth = isHorizontal
+    ? (labelWidth || "col-span-4")
+    : labelWidth;
+  const resolvedInputWidth = isHorizontal
+    ? (() => {
+        if (inputWidth) return inputWidth;
+        const match = resolvedLabelWidth.match(/col-span-(\d+)/);
+        if (!match) return "col-span-8";
+        const labelCols = Number(match[1]);
+        const inputCols = Math.min(Math.max(12 - labelCols, 1), 11);
+        return `col-span-${inputCols}`;
+      })()
+    : inputWidth;
 
   // Xử lý logic validation đặc thù cho Email
   const finalRules: RegisterOptions = { ...(rules || {}) };
@@ -128,10 +141,10 @@ const Textbox: React.FC<TextboxProps> = (props) => {
                   !textAreaRow && "h-9",
                   hasError && "border-red-500",
                   disabled && "bg-gray-100 cursor-not-allowed",
-                  isHorizontal ? inputWidth : "w-full",
+                  "w-full",
                   inputClassName,
                 )}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                   const val =
                     type === "number"
                       ? e.target.value.replace(/[^0-9.-]/g, "")
@@ -151,19 +164,19 @@ const Textbox: React.FC<TextboxProps> = (props) => {
 
           if (isHorizontal) {
             return (
-              <div className="flex flex-row items-start gap-2 py-1">
+              <div className="admin-form-row">
                 {label && (
                   <label
                     className={cn(
-                      "text-sm font-bold text-gray-700 pt-1.5",
-                      labelWidth,
+                      "admin-form-label",
+                      resolvedLabelWidth,
                     )}
                     style={labelStyle}
                   >
                     {label}
                   </label>
                 )}
-                <div className="flex-1">{renderInput()}</div>
+                <div className={cn("admin-form-control", resolvedInputWidth)}>{renderInput()}</div>
               </div>
             );
           }

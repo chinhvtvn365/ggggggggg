@@ -11,6 +11,7 @@ import {
   updateTotalRows,
   onTriggerOpenCreateModal,
 } from "@/lib/features/datatable/datatableSlice";
+import { open, close } from "@/lib/features/loading/loadingSlice";
 import fileSubmitHandler from "./FileSubmitHandler";
 import { DATATABLE_MODAL_CREATE_MODE } from "@/constants/datatable.enum";
 
@@ -75,15 +76,22 @@ const CreateModal: React.FC<CreateModalProps> = (props) => {
     isSubmitFile = false,
     disableOnOpenDefaultValues = false,
     customLabel,
+    style,
     disableFields = [],
     modalType,
     navigate = null,
     customFooter = null,
   } = props;
 
+  const resolvedModalMaxWidth =
+    uiConfigs?.modalWidth ||
+    (typeof style?.width === "string" ? style.width : undefined) ||
+    "50vw";
+
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [modal, setModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [formConfigs, setFormConfigs] = useState({});
   const lastOpenedRef = React.useRef<string | null>(null);
 
@@ -148,42 +156,47 @@ const CreateModal: React.FC<CreateModalProps> = (props) => {
   }, [datatableReducer.defaultCreateValues]);
 
   const onSubmit = async (formData: Record<string, unknown>) => {
+    setSubmitting(true);
+    dispatch(open());
     if (isSubmitFile) {
       try {
         formData = await fileSubmitHandler(formData, true);
       } catch (ex) {
         console.error("fileSubmitHandler error", ex);
+        setSubmitting(false);
+        dispatch(close());
         return;
       }
     }
 
-    const payload =
-      typeof transform2BE === "function" ? await transform2BE(formData) : formData;
-    if (!payload) return;
+    try {
+      const payload =
+        typeof transform2BE === "function" ? await transform2BE(formData) : formData;
+      if (!payload) return;
 
-    proxyService
-      .post(api, payload, headers)
-      .then((result) => {
-        if (result.data) {
-          toggle();
-          formData.id = (result.data as Record<string, unknown>).id;
-          const resData =
-            typeof handleResponseData === "function"
-              ? handleResponseData(result.data as Record<string, unknown>)
-              : formData;
-          whenClose(resData);
-          dispatch(updateTotalRows(totalCount + 1));
-          if (
-            datatableReducer.defaultCreateModalValues &&
-            Object.keys(datatableReducer.defaultCreateModalValues)?.length > 0
-          ) {
-            dispatch(onTriggerOpenCreateModal({}));
-          }
+      const result = await proxyService.post(api, payload, headers);
+      if (result.data) {
+        toggle();
+        formData.id = (result.data as Record<string, unknown>).id;
+        const resData =
+          typeof handleResponseData === "function"
+            ? handleResponseData(result.data as Record<string, unknown>)
+            : formData;
+        whenClose(resData);
+        dispatch(updateTotalRows(totalCount + 1));
+        if (
+          datatableReducer.defaultCreateModalValues &&
+          Object.keys(datatableReducer.defaultCreateModalValues)?.length > 0
+        ) {
+          dispatch(onTriggerOpenCreateModal({}));
         }
-      })
-      .catch((err: unknown) => {
-        console.error("Submission error:", err);
-      });
+      }
+    } catch (err: unknown) {
+      console.error("Submission error:", err);
+    } finally {
+      setSubmitting(false);
+      dispatch(close());
+    }
   };
 
   const handleClose = () => {
@@ -211,7 +224,7 @@ const CreateModal: React.FC<CreateModalProps> = (props) => {
           variant="primary"
           className={`${className ?? ""} bg-emerald-600 hover:!bg-emerald-700`}
         >
-          <i className="fa-solid fa-plus mr-1" />
+          <i className="fa-solid fa-plus" />
           {customLabel ?? "Thêm"}
         </Button>
       )}
@@ -219,12 +232,19 @@ const CreateModal: React.FC<CreateModalProps> = (props) => {
       <Modal isOpen={modal} onOpenChange={(open) => !open && handleClose()}>
         <Modal.Backdrop>
           <Modal.Container placement="top">
-            <Modal.Dialog style={{ maxWidth: uiConfigs?.modalWidth || "780px", maxHeight: "92vh" }}>
+            <Modal.Dialog
+              className="admin-form-modal-dialog"
+              style={{
+                maxWidth: resolvedModalMaxWidth,
+                maxHeight: "95vh",
+                ...style,
+              }}
+            >
               <Modal.CloseTrigger />
-              <Modal.Header>
+              <Modal.Header className="admin-form-modal-header">
                 <Modal.Heading>{uiConfigs?.headerText ?? "Thêm mới"}</Modal.Heading>
               </Modal.Header>
-              <Modal.Body>
+              <Modal.Body className="admin-form-modal-body">
                 <FormProvider {...extendedMethods}>
                   <form
                     id="create-modal-form"
@@ -240,23 +260,27 @@ const CreateModal: React.FC<CreateModalProps> = (props) => {
                   </form>
                 </FormProvider>
               </Modal.Body>
-              <Modal.Footer>
+              <Modal.Footer className="admin-form-modal-footer">
                 {customFooter}
                 <div className="ml-auto flex items-center gap-2">
                   <Button
+                    size="md"
                     type="submit"
                     form="create-modal-form"
                     variant="primary"
+                    isDisabled={submitting}
                   >
-                    <i className="fas fa-save mr-1" />
+                    <i className={`fas ${submitting ? "fa-spinner fa-spin" : "fa-save"}`} />
                     {uiConfigs?.submitButtonLabel ?? "Lưu"}
                   </Button>
                   <Button
+                    size="md"
                     type="button"
-                    variant="outline"
+                    variant="tertiary"
+                    isDisabled={submitting}
                     onPress={handleClose}
                   >
-                    <i className="fas fa-times mr-1" />
+                    <i className="fas fa-times" />
                     Đóng
                   </Button>
                 </div>

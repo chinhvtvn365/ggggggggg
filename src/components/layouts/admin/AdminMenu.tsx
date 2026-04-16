@@ -12,7 +12,7 @@ interface AdminMenuProps {
 const AdminMenu = ({ model }: AdminMenuProps) => {
   return (
     <MenuProvider>
-      <ul className="layout-menu admin-menu-root list-none p-0 m-0 space-y-0.5">
+      <ul className="layout-menu admin-menu-root list-none p-0 m-0 space-y-0.5 border-none">
         {model.map((item, i) => {
           return !item.seperator ? (
             <AdminMenuItem item={item} root={true} index={i} key={item.label} />

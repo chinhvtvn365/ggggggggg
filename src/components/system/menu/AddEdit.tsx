@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { Input } from "@heroui/react";
+import Image from "next/image";
 
 import { REQUIRED } from "@/constants/datatable.enum";
 import { proxyService } from "@/services";
@@ -15,6 +16,37 @@ const icons = [
   { value: "fa-user", label: "User" },
   { value: "fa-cog", label: "Settings" },
 ];
+
+let hierarchyCache: any[] | null = null;
+let hierarchyRequest: Promise<any[] | null> | null = null;
+
+const getHierarchyCached = async (): Promise<any[] | null> => {
+  if (hierarchyCache) return hierarchyCache;
+  if (hierarchyRequest) return hierarchyRequest;
+
+  hierarchyRequest = proxyService
+    .get("/api/app/menu-management/hierarchy")
+    .then((res) => {
+      if (res.status === 200 && Array.isArray(res.data)) {
+        hierarchyCache = res.data;
+        return hierarchyCache;
+      }
+      return null;
+    })
+    .catch((error) => {
+      console.error("Lỗi lấy menu cha:", error);
+      return null;
+    })
+    .finally(() => {
+      hierarchyRequest = null;
+    });
+
+  return hierarchyRequest;
+};
+
+const ROLE_ITEM_HEIGHT = 36;
+const ROLE_LIST_VIEWPORT_HEIGHT = 320;
+const ROLE_LIST_OVERSCAN = 6;
 
 const AddEditModalContent = ({
   data,
@@ -29,40 +61,42 @@ const AddEditModalContent = ({
   const [nodes, setNodes] = useState<any[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string | null>(null);
   const [showIconPicker, setShowIconPicker] = useState(false);
+  const [roleScrollTop, setRoleScrollTop] = useState(0);
 
-  // Chuyển đổi dữ liệu cho TreeSelect (hoặc Select phân cấp)
-  const convertToModel = (resdata: any[], currentLevel = 0): any[] => {
-    let menus = resdata
-      .map((item) => {
-        if (data !== null && item.id === data?.id) return null;
-        return {
-          key: item.id,
-          label: item.name,
-          menuGroup: item.menuGroup,
-          level: currentLevel,
-          children: item.children?.length
-            ? convertToModel(item.children, currentLevel + 1)
-            : [],
-        };
-      })
-      .filter(Boolean);
+  const getParentMenu = useCallback(async () => {
+    const convertToModel = (resdata: any[], currentLevel = 0): any[] => {
+      const menus = resdata
+        .map((item) => {
+          if (data !== null && item.id === data?.id) return null;
+          return {
+            key: item.id,
+            label: item.name,
+            menuGroup: item.menuGroup,
+            level: currentLevel,
+            children: item.children?.length
+              ? convertToModel(item.children, currentLevel + 1)
+              : [],
+          };
+        })
+        .filter(Boolean);
 
-    if (currentLevel === 0) {
-      menus.unshift({ key: "", label: "--- Chọn ---", level: -1 });
-    }
-    return menus;
-  };
-
-  const getParentMenu = async () => {
-    try {
-      const res = await proxyService.get("/api/app/menu-management/hierarchy");
-      if (res.status === 200 && res.data) {
-        setNodes(convertToModel(res.data));
+      if (currentLevel === 0) {
+        menus.unshift({
+          key: "",
+          label: "--- Chọn ---",
+          menuGroup: "",
+          level: -1,
+          children: [],
+        });
       }
-    } catch (error) {
-      console.error("Lỗi lấy menu cha:", error);
+      return menus;
+    };
+
+    const cachedHierarchy = await getHierarchyCached();
+    if (cachedHierarchy) {
+      setNodes(convertToModel(cachedHierarchy));
     }
-  };
+  }, [data]);
 
   const findNodeByKey = (nodes: any[], key: string): any => {
     for (const node of nodes) {
@@ -76,14 +110,18 @@ const AddEditModalContent = ({
   };
 
   useEffect(() => {
-    getParentMenu();
-    if (data && data.id) {
-      data.roleIds?.forEach((roleId: string) => {
-        setValue(`roleIdsModal.${roleId}`, true);
-      });
-      setImagePreviews(data?.image);
-    }
-  }, [data, setValue]);
+    const timer = setTimeout(() => {
+      void getParentMenu();
+      if (data && data.id) {
+        data.roleIds?.forEach((roleId: string) => {
+          setValue(`roleIdsModal.${roleId}`, true);
+        });
+        setImagePreviews(data?.image);
+      }
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [data, getParentMenu, setValue]);
 
   useEffect(() => {
     setValue("image", imagePreviews);
@@ -94,11 +132,37 @@ const AddEditModalContent = ({
     ? nodes.filter((x) => x.menuGroup === menuGroupControl || x.key === "")
     : nodes;
 
+  const deferredRoles = useDeferredValue(dataSource.roles || []);
+  const selectedRoleIds = useMemo(
+    () => new Set((data?.roleIds || []) as string[]),
+    [data?.roleIds],
+  );
+
+  const roleListWindow = useMemo(() => {
+    const total = deferredRoles.length;
+    const start = Math.max(
+      0,
+      Math.floor(roleScrollTop / ROLE_ITEM_HEIGHT) - ROLE_LIST_OVERSCAN,
+    );
+    const end = Math.min(
+      total,
+      Math.ceil((roleScrollTop + ROLE_LIST_VIEWPORT_HEIGHT) / ROLE_ITEM_HEIGHT) +
+        ROLE_LIST_OVERSCAN,
+    );
+
+    return {
+      total,
+      start,
+      end,
+      items: deferredRoles.slice(start, end),
+    };
+  }, [deferredRoles, roleScrollTop]);
+
   return (
-    <div className="grid grid-cols-12 gap-6 p-1">
+    <div className="admin-modal-form-grid grid grid-cols-12 gap-6 p-1">
       {/* CỘT TRÁI: THÔNG TIN CHI TIẾT */}
       <div className="col-span-12 md:col-span-8 space-y-3">
-        <h5 className="text-lg font-semibold text-blue-600 mb-3">Thông tin</h5>
+        <h5 className="text-lg font-semibold text-blue-700 mb-3">Thông tin</h5>
 
         <div className="grid grid-cols-12 gap-x-5 gap-y-0">
           <div className="col-span-12 md:col-span-6">
@@ -107,7 +171,6 @@ const AddEditModalContent = ({
               name="name"
               rules={REQUIRED}
               layout="horizontal"
-              labelWidth="w-1/3"
             />
           </div>
           <div className="col-span-12 md:col-span-6">
@@ -115,7 +178,6 @@ const AddEditModalContent = ({
               label="Mã"
               name="code"
               layout="horizontal"
-              labelWidth="w-1/3"
             />
           </div>
 
@@ -127,15 +189,14 @@ const AddEditModalContent = ({
               rules={REQUIRED}
               placeholder="Chọn"
               layout="horizontal"
-              labelWidth="w-1/3"
             />
           </div>
 
-          <div className="col-span-12 md:col-span-6 flex items-center gap-2 py-1">
-            <label className="text-sm font-bold text-gray-700 w-1/3">
+          <div className="col-span-12 md:col-span-6 admin-form-row">
+            <label className="admin-form-label">
               Menu cha
             </label>
-            <div className="flex-1">
+            <div className="admin-form-control">
               {/* Lưu ý: Nếu dự án của bạn có component TreeSelect riêng, hãy thay thế tại đây */}
               <Controller
                 name="parentId"
@@ -146,7 +207,7 @@ const AddEditModalContent = ({
                     value={field.value}
                     onBlur={field.onBlur}
                     ref={field.ref}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded bg-white hover:border-gray-400 focus:outline-none focus:border-[#0f6bbf] transition-colors"
+                    className="w-full h-9 px-2 py-1.5 text-sm border border-gray-300 rounded bg-white hover:border-gray-400 focus:outline-none focus:border-[#0f6bbf] transition-colors"
                     onChange={(e) => {
                       const val = e.target.value;
                       field.onChange(val);
@@ -176,7 +237,6 @@ const AddEditModalContent = ({
               options={dataSource?.postisionMenu}
               placeholder="Chọn"
               layout="horizontal"
-              labelWidth="w-1/3"
             />
           </div>
 
@@ -187,7 +247,6 @@ const AddEditModalContent = ({
               options={dataSource?.functionMenu}
               placeholder="Chọn"
               layout="horizontal"
-              labelWidth="w-1/3"
             />
           </div>
 
@@ -196,15 +255,16 @@ const AddEditModalContent = ({
               label="Đường dẫn"
               name="path"
               layout="horizontal"
-              labelWidth="w-1/6"
+              labelWidth="col-span-2"
+              inputWidth="col-span-10"
             />
           </div>
 
-          <div className="col-span-12 md:col-span-6 flex items-center gap-2 py-1">
-            <label className="text-sm font-bold text-gray-700 w-1/3">
+          <div className="col-span-12 md:col-span-6 admin-form-row">
+            <label className="admin-form-label">
               Icon Class
             </label>
-            <div className="flex-1 flex gap-1 relative">
+            <div className="admin-form-control flex gap-1 relative">
               <Controller
                 name="iconClass"
                 control={control}
@@ -212,12 +272,12 @@ const AddEditModalContent = ({
                   <>
                     <Input
                       name={field.name}
-                      value={field.value}
+                      value={field.value ?? ""}
                       onChange={field.onChange}
                       onBlur={field.onBlur}
                       ref={field.ref}
                       placeholder="fa-solid fa-home"
-                      className="w-full h-9 rounded-md shadow-none text-sm border border-gray-300 rounded hover:border-gray-400 focus:border-[#0f6bbf] transition-colors bg-white px-2"
+                      className="w-full h-9 rounded-md px-2 text-sm shadow-none border border-gray-300 hover:border-gray-400 focus:border-[#0f6bbf] focus:outline-none transition-colors"
                     />
                     {showIconPicker && (
                       <div className="absolute top-full right-0 mt-2 w-[400px] bg-white rounded-lg shadow-xl border border-gray-200 z-50">
@@ -253,7 +313,6 @@ const AddEditModalContent = ({
               name="order"
               type="number"
               layout="horizontal"
-              labelWidth="w-1/3"
             />
           </div>
 
@@ -263,12 +322,13 @@ const AddEditModalContent = ({
               name="description"
               textAreaRow={2}
               layout="horizontal"
-              labelWidth="w-1/6"
+              labelWidth="col-span-2"
+              inputWidth="col-span-10"
             />
           </div>
         </div>
 
-        <div className="space-y-3 pt-3 border-t">
+          <div className="space-y-3 pt-3 mt-1 border-t border-gray-200">
           <div className="flex flex-col gap-2 mb-4">
             <label className="text-sm font-medium">Icon cho menu</label>
             <input
@@ -279,15 +339,22 @@ const AddEditModalContent = ({
                 const file = e.target.files?.[0];
                 if (file) {
                   const reader = new FileReader();
-                  reader.onloadend = () => setImagePreviews(reader.result);
+                  reader.onloadend = () => {
+                    const preview =
+                      typeof reader.result === "string" ? reader.result : null;
+                    setImagePreviews(preview);
+                  };
                   reader.readAsDataURL(file);
                 }
               }}
             />
             {imagePreviews && (
-              <img
+              <Image
                 src={imagePreviews as string}
                 alt="Preview"
+                width={80}
+                height={80}
+                unoptimized
                 className="mt-2 w-20 h-20 object-cover rounded"
               />
             )}
@@ -331,36 +398,50 @@ const AddEditModalContent = ({
       </div>
 
       {/* CỘT PHẢI: PHÂN QUYỀN */}
-      <div className="col-span-12 md:col-span-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
-        <h5 className="text-lg font-semibold text-blue-600 mb-3">Phân quyền</h5>
-        <div className="flex flex-col">
-          {dataSource.roles?.map((item: any) => (
-            <div
-              key={item.id}
-              className="flex items-center hover:bg-gray-100 p-1 rounded-lg transition-colors"
-            >
-              <Controller
-                control={control}
-                name={`roleIdsModal.${item.id}`}
-                defaultValue={
-                  data
-                    ? data.roleIds?.some((role: any) => role === item.id)
-                    : item.isDefault
-                }
-                render={({ field }) => (
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={field.value}
-                      onChange={(e) => field.onChange(e.target.checked)}
-                      className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-                    />
-                    <span className="text-sm">{item.name}</span>
-                  </label>
-                )}
-              />
-            </div>
-          ))}
+      <div className="col-span-12 md:col-span-4 bg-white p-3 rounded-lg border border-gray-200">
+        <h5 className="text-lg font-semibold text-blue-700 mb-3">Phân quyền</h5>
+        <div
+          className="overflow-y-auto"
+          style={{ maxHeight: `${ROLE_LIST_VIEWPORT_HEIGHT}px` }}
+          onScroll={(e) => setRoleScrollTop(e.currentTarget.scrollTop)}
+        >
+          <div
+            className="relative"
+            style={{ height: `${roleListWindow.total * ROLE_ITEM_HEIGHT}px` }}
+          >
+            {roleListWindow.items.map((item: any, index: number) => {
+              const roleIndex = roleListWindow.start + index;
+              return (
+                <div
+                  key={item.id}
+                  className="absolute left-0 right-0 flex items-center hover:bg-gray-100 p-1 rounded-lg transition-colors"
+                  style={{
+                    top: `${roleIndex * ROLE_ITEM_HEIGHT}px`,
+                    height: `${ROLE_ITEM_HEIGHT}px`,
+                  }}
+                >
+                  <Controller
+                    control={control}
+                    name={`roleIdsModal.${item.id}`}
+                    defaultValue={
+                      data ? selectedRoleIds.has(item.id) : item.isDefault
+                    }
+                    render={({ field }) => (
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={!!field.value}
+                          onChange={(e) => field.onChange(e.target.checked)}
+                          className="w-4 h-4 border-gray-300 rounded focus:ring-purple-500"
+                        />
+                        <span className="text-sm">{item.name}</span>
+                      </label>
+                    )}
+                  />
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

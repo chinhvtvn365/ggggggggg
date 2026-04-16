@@ -99,7 +99,6 @@ const RadioGroup: React.FC<RadioGroupProps> = (props) => {
                 }}
                 isDisabled={disabled}
                 orientation={isHorizontal ? "horizontal" : "vertical"}
-                className={cn("w-full", radioClassName)}
               >
                 <div className={cn(
                   "flex flex-wrap gap-4",
@@ -109,7 +108,6 @@ const RadioGroup: React.FC<RadioGroupProps> = (props) => {
                     <CustomRadio 
                       key={String(option.value)} 
                       value={String(option.value)}
-                      className={cn(radioWidth, inputClassName)}
                       // Standard props only
                     >
                       <span className={cn("text-sm cursor-pointer", radioLabelClassName, option.labelClass, labelClass)}>

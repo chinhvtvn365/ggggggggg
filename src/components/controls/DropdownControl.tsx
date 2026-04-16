@@ -59,8 +59,8 @@ const DropdownControl: React.FC<DropdownControlProps> = (props) => {
     wrapperClassName = "w-full",
     showClear = false,
     layout = "vertical",
-    labelWidth = "w-1/4",
-    inputWidth = "w-full",
+    labelWidth = "",
+    inputWidth = "",
     showAllOption = { active: false, label: "Tất cả", value: "all" },
     firstOptionsAsDefault = false,
     tooltip = "",
@@ -87,6 +87,19 @@ const DropdownControl: React.FC<DropdownControlProps> = (props) => {
   }, [defaultValue, firstOptionsAsDefault, processedOptions]);
 
   const isHorizontal = layout === "horizontal";
+  const resolvedLabelWidth = isHorizontal
+    ? (labelWidth || "col-span-4")
+    : labelWidth;
+  const resolvedInputWidth = isHorizontal
+    ? (() => {
+        if (inputWidth) return inputWidth;
+        const match = resolvedLabelWidth.match(/col-span-(\d+)/);
+        if (!match) return "col-span-8";
+        const labelCols = Number(match[1]);
+        const inputCols = Math.min(Math.max(12 - labelCols, 1), 11);
+        return `col-span-${inputCols}`;
+      })()
+    : inputWidth;
 
   return (
     <div className={`w-full mb-1 ${className}`}>
@@ -174,14 +187,14 @@ const DropdownControl: React.FC<DropdownControlProps> = (props) => {
 
           if (isHorizontal) {
             return (
-              <div className={`flex flex-row items-center gap-2 py-1 ${wrapperClassName}`}>
+              <div className={`admin-form-row ${wrapperClassName}`}>
                 {label && (
-                  <label htmlFor={name} className={`text-sm font-bold text-gray-700 ${labelWidth}`}>
+                  <label htmlFor={name} className={`admin-form-label ${resolvedLabelWidth}`}>
                     {label}
                     {rules?.required && <span className="text-red-500 ml-1">*</span>}
                   </label>
                 )}
-                <div className={`flex-1 ${inputWidth}`}>
+                <div className={`admin-form-control ${resolvedInputWidth}`}>
                   {renderSelect()}
                 </div>
               </div>

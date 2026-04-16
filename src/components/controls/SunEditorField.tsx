@@ -81,8 +81,21 @@ export default function SunEditorField({
 
   const [labelCol, inputCol] = useMemo(() => {
     const [left = "5", right = "5"] = layout.split("|");
-    return [`col-${left}`, `col-${right}`];
+    return [`col-span-${left}`, `col-span-${right}`];
   }, [layout]);
+
+  const normalizeColClass = (value: string, fallback: string) => {
+    if (!value) return fallback;
+    if (value.includes("col-span-")) return value;
+    const match = value.match(/\bcol-(\d+)\b/);
+    if (match) {
+      return value.replace(/\bcol-(\d+)\b/g, "col-span-$1");
+    }
+    return value;
+  };
+
+  const resolvedLabelWidth = normalizeColClass(labelWidth, labelCol);
+  const resolvedInputWidth = normalizeColClass(inputWidth, inputCol);
 
   const editorOptions = useMemo(
     () => ({
@@ -200,9 +213,9 @@ export default function SunEditorField({
 
   if (direction === "horizontal") {
     return (
-      <div className={`flex justify-content-center align-items-center gap-3 ${className || ""}`}>
-        <label className={labelWidth || labelCol}>{labelText}</label>
-        <div className={inputWidth || inputCol}>{editorNode}</div>
+      <div className={`admin-form-row ${className || ""}`}>
+        <label className={`admin-form-label ${resolvedLabelWidth}`}>{labelText}</label>
+        <div className={`admin-form-control ${resolvedInputWidth}`}>{editorNode}</div>
       </div>
     );
   }

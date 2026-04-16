@@ -7,6 +7,7 @@ import DataTable from "@/components/layouts/admin/commons/table/DataTable";
 import { DELETE_TYPE_MULTI } from "@/constants/datatable.enum";
 import { proxyService } from "@/services";
 import { useAppDispatch } from "@/lib/hooks";
+import { open, close } from "@/lib/features/loading/loadingSlice";
 import { showSuccess, showError } from "@/lib/features/snackbar/snackBarSlice";
 import moment from "moment";
 import { useSearchParams } from "next/navigation";
@@ -144,6 +145,7 @@ const Page = () => {
 
   const handleCrawlData = async (chuDeId: string) => {
     setCrawlingId(chuDeId);
+    dispatch(open());
     try {
       const res = await proxyService.post<{ success: boolean; message: string }>(
         `/api/app/tin-tuc-chu-de/crawl-and-save/${chuDeId}`,
@@ -162,6 +164,7 @@ const Page = () => {
       console.error("Lỗi crawl:", err);
     } finally {
       setCrawlingId(null);
+      dispatch(close());
     }
   };
 
@@ -180,7 +183,7 @@ const Page = () => {
       pagination: false,
       tableStyles: { 
         softActionIcons: true,
-        className: "bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden",
+        className: "",
         verticalGridlines: false
       },
       columns: [
